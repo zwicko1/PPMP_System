@@ -1,0 +1,200 @@
+body {
+  font-family: "Poppins", sans-serif;
+  background-color: #f7f7f7;
+  color: #333;
+  margin: 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  background-color: #8c1d40;
+  color: #fff;
+  padding: 10px 20px;
+}
+
+.logo {
+  width: 80px;
+  height: 80px;
+  margin-right: 15px;
+}
+
+.header-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.header-grid label {
+  background: #f0f0f0;
+  color: #000;
+  padding: 5px 8px;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-section,
+.table-display {
+  background: #fff;
+  margin: 20px;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.form-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.form-grid > div {
+  flex: 1 1 calc(50% - 15px);
+  display: flex;
+  flex-direction: column;
+}
+
+input,
+select {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+button {
+  background: #8c1d40;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  margin: 5px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+button:hover {
+  background: #a72b52;
+}
+
+/* Style for Edit and Delete buttons inside the project table */
+#ppmpTable button {
+  font-size: 14px;
+  padding: 4px 8px;
+  margin: 2px;
+  border-radius: 4px;
+}
+
+/* Edit button color */
+#ppmpTable button:first-child {
+  background-color: #3498db; /* blue */
+  color: white;
+}
+#ppmpTable button:first-child:hover {
+  background-color: #2980b9;
+}
+
+/* Delete button color */
+#ppmpTable button:last-child {
+  background-color: #e74c3c; /* red */
+  color: white;
+}
+#ppmpTable button:last-child:hover {
+  background-color: #c0392b;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+th,
+td {
+  border: 1px solid #ccc;
+  text-align: center;
+  padding: 8px;
+}
+
+.total-container {
+  text-align: right;
+  margin-top: 10px;
+  font-weight: 600;
+}
+
+.signature-container {
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+  margin: 40px 20px;
+}
+
+footer {
+  text-align: right;
+  font-size: 12px;
+  margin: 20px;
+}
+
+@media print {
+  body {
+    font-family: "Poppins", sans-serif;
+  }
+  .form-section,
+  .button-group {
+    display: none;
+  }
+  .header {
+    color: #000;
+    background: none;
+  }
+  .logo {
+    float: left;
+  }
+}
+
+/* ✅ Responsive adjustments */
+@media (max-width: 1024px) {
+  .header,
+  .form-grid,
+  .header-grid {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .header-grid label {
+    width: 100%;
+  }
+  .form-grid > div {
+    flex: 1 1 100%;
+  }
+  button {
+    width: 100%;
+    margin-top: 8px;
+  }
+}
+
+@media (max-width: 600px) {
+  body {
+    font-size: 14px;
+  }
+  .logo {
+    width: 60px;
+    height: 60px;
+  }
+  .header h1,
+  .header h2 {
+    font-size: 1rem;
+  }
+  .header-grid label {
+    font-size: 0.9rem;
+  }
+  .form-section,
+  .table-display {
+    margin: 10px;
+    padding: 15px;
+  }
+  th,
+  td {
+    font-size: 0.85rem;
+    padding: 4px;
+  }
+}
