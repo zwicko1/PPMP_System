@@ -134,7 +134,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const headerHTML = `
         <div style="display:flex;align-items:center;gap:10px;">
-            <img src="${logoPath}" width="80" height="80" style="margin-right:10px;">
+            <img src="${
+              assets / tup_logo.png
+            }" width="80" height="80" style="margin-right:10px;">
             <div>
             <h2 style="margin:0;">Technological University of the Philippines - Manila</h2>
             <h3 style="margin:0;">Project Procurement Management Plan (PPMP)</h3>
