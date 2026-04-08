@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PPMP Web App</title>
+    <title>PPMP Web App - TUP Procurement</title>
     <link rel="stylesheet" href="style.css" />
     <link
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap"
@@ -13,186 +13,166 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
     />
+    <style>
+      .login-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background-color: #f8f9fa;
+      }
+      .login-card {
+        background: white;
+        padding: 40px;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        width: 100%;
+        max-width: 400px;
+        text-align: center;
+      }
+      .login-card h2 { margin-top: 0; color: #c14f3b; margin-bottom: 20px; font-size: 1.5rem; }
+      .login-card input {
+        width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: 'Poppins', sans-serif;
+      }
+      .login-card button {
+        width: 100%; padding: 10px; background: #c14f3b; color: white; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; font-size: 1rem;
+      }
+      .login-card button:hover { background: #a84534; }
+    </style>
   </head>
   <body>
-    <header class="header">
-      <img src="assets/tup_logo.png" alt="Logo" class="logo" />
-      <div class="header-content">
-        <h1>Technological University of the Philippines - Manila</h1>
-        <h2>PROJECT PROCUREMENT MANAGEMENT PLAN (PPMP)</h2>
-        <div class="header-grid">
-          <label
-            >Fiscal Year:
-            <input type="number" id="fiscalYear" />
-          </label>
-          <label
-            >End-User / Implementing Unit:
-            <input type="text" id="unit" />
-          </label>
-          <label
-            >Office:
-            <input type="text" id="office" />
-          </label>
-          <label
-            >Designation:
-            <input type="text" id="unitDesignation" />
-          </label>
-          <label><input type="checkbox" id="indicative" /> Indicative</label>
-          <label><input type="checkbox" id="final" /> Final</label>
-          <label
-            >Head of Implementing Unit / Sector:
-            <input type="text" id="headUnit" />
-          </label>
-          <label
-            >Designation:
-            <input type="text" id="headDesignation" />
-          </label>
+
+    <div id="loginSection" class="login-wrapper">
+        <div class="login-card">
+            <img src="assets/tup_logo.png" alt="Logo" style="width: 80px; margin-bottom: 15px;" />
+            <h2>Procurement Login</h2>
+            <input type="email" id="emailInput" placeholder="Official Email Address" required>
+            <input type="password" id="passwordInput" placeholder="Password" required>
+            <button id="loginBtn">Secure Login</button>
+            <p id="loginMessage" style="margin-top: 15px; font-size: 0.9em; font-weight: 500;"></p>
         </div>
-      </div>
-    </header>
+    </div>
 
-    <section class="form-section">
-      <h3>Add Procurement Project</h3>
-      <form id="projectForm">
-        <div class="form-grid">
-          <div>
-            <label>Description:</label
-            ><input type="text" id="description" required />
+    <div id="mainPpmpApp" style="display: none;">
+        <header class="header">
+          <img src="assets/tup_logo.png" alt="Logo" class="logo" />
+          <div class="header-content">
+            <h1>Technological University of the Philippines - Manila</h1>
+            <h2>PROJECT PROCUREMENT MANAGEMENT PLAN (PPMP)</h2>
+            <div class="header-grid">
+              <label>Fiscal Year: <input type="number" id="fiscalYear" /></label>
+              <label>End-User / Implementing Unit: <input type="text" id="unit" /></label>
+              <label>Office: <input type="text" id="office" /></label>
+              <label>Designation: <input type="text" id="unitDesignation" /></label>
+              <label><input type="checkbox" id="indicative" /> Indicative</label>
+              <label><input type="checkbox" id="final" /> Final</label>
+              <label>Head of Implementing Unit / Sector: <input type="text" id="headUnit" /></label>
+              <label>Designation: <input type="text" id="headDesignation" /></label>
+            </div>
           </div>
-          <div>
-            <label>Type:</label>
-            <select id="type">
-              <option>Goods</option>
-              <option>Infrastructure</option>
-              <option>Consultancy</option>
-            </select>
-          </div>
-          <div>
-            <label>Quantity / Size:</label
-            ><input type="text" id="quantity" required />
-          </div>
-          <div>
-            <label>Mode of Procurement:</label>
-            <select id="mode">
-              <option>Competitive Bidding</option>
-              <option>Limited Source Bidding</option>
-              <option>Direct Contracting</option>
-              <option>Small Value Procurement</option>
-              <option>Competitive Dialogue</option>
-              <option>Unsolicited Offer with Bid Matching</option>
-              <option>Direct Acquisition</option>
-              <option>Repeat Order</option>
-              <option>Direct Sales</option>
-              <option>Negotiated Procurement</option>
-              <option>
-                Direct Procurement for Science, Technology and Innovation (STI)
-              </option>
-            </select>
-          </div>
-          <div>
-            <label>Pre-Procurement Conf.:</label>
-            <select id="preProc">
-              <option>Yes</option>
-              <option>No</option>
-            </select>
-          </div>
-          <div>
-            <label>Start Date:</label
-            ><input type="text" id="startDate" class="month-picker" required />
-          </div>
-          <div>
-            <label>End Date:</label
-            ><input type="text" id="endDate" class="month-picker" required />
-          </div>
-          <div>
-            <label>Implementation Period:</label
-            ><input
-              type="text"
-              id="implementation"
-              class="month-picker"
-              required
-            />
-          </div>
-          <div>
-            <label>Source of Funds:</label>
-            <select id="source">
-              <option>GAA - Current / Continuing</option>
-              <option>Corporate Operating Budget</option>
-              <option>Appropriation Ordinance</option>
-              <option>Internally Generated Income</option>
-              <option>Special Purpose Fund</option>
-              <option>Trust Fund</option>
-              <option>Foreign-Assisted Fund</option>
-            </select>
-          </div>
-          <div>
-            <label>Estimated Budget (₱):</label
-            ><input type="number" id="budget" min="0" required />
-          </div>
-          <div>
-            <label>Supporting Docs:</label><input type="text" id="docs" />
-          </div>
-          <div><label>Remarks:</label><input type="text" id="remarks" /></div>
-        </div>
+        </header>
 
-        <div class="button-group">
-          <button type="button" id="addProject">➕ Add Project</button>
-          <button type="button" id="exportExcel">
-            ⬇️ Export to Excel / CSV
-          </button>
-          <button type="button" id="printPPMP">🖨️ Print / Save as PDF</button>
-        </div>
-      </form>
-    </section>
+        <section class="form-section">
+          <h3>Add Procurement Project</h3>
+          <form id="projectForm">
+            <div class="form-grid">
+              <div><label>Description:</label><input type="text" id="description" required /></div>
+              <div>
+                <label>Type:</label>
+                <select id="type">
+                  <option>Goods</option>
+                  <option>Infrastructure</option>
+                  <option>Consultancy</option>
+                </select>
+              </div>
+              <div><label>Quantity / Size:</label><input type="text" id="quantity" required /></div>
+              <div>
+                <label>Mode of Procurement:</label>
+                <select id="mode">
+                  <option>Competitive Bidding</option>
+                  <option>Limited Source Bidding</option>
+                  <option>Direct Contracting</option>
+                  <option>Small Value Procurement</option>
+                  <option>Competitive Dialogue</option>
+                  <option>Unsolicited Offer with Bid Matching</option>
+                  <option>Direct Acquisition</option>
+                  <option>Repeat Order</option>
+                  <option>Direct Sales</option>
+                  <option>Negotiated Procurement</option>
+                  <option>Direct Procurement for Science, Technology and Innovation (STI)</option>
+                </select>
+              </div>
+              <div>
+                <label>Pre-Procurement Conf.:</label>
+                <select id="preProc">
+                  <option>Yes</option>
+                  <option>No</option>
+                </select>
+              </div>
+              <div><label>Start Date:</label><input type="text" id="startDate" class="month-picker" required /></div>
+              <div><label>End Date:</label><input type="text" id="endDate" class="month-picker" required /></div>
+              <div><label>Implementation Period:</label><input type="text" id="implementation" class="month-picker" required /></div>
+              <div>
+                <label>Source of Funds:</label>
+                <select id="source">
+                  <option>GAA - Current / Continuing</option>
+                  <option>Corporate Operating Budget</option>
+                  <option>Appropriation Ordinance</option>
+                  <option>Internally Generated Income</option>
+                  <option>Special Purpose Fund</option>
+                  <option>Trust Fund</option>
+                  <option>Foreign-Assisted Fund</option>
+                </select>
+              </div>
+              <div><label>Estimated Budget (₱):</label><input type="number" id="budget" min="0" required /></div>
+              <div><label>Supporting Docs:</label><input type="text" id="docs" /></div>
+              <div><label>Remarks:</label><input type="text" id="remarks" /></div>
+            </div>
 
-    <!-- Project Table -->
-    <section class="table-display">
-      <h3>Procurement Projects List</h3>
-      <div class="table-container">
-        <table id="ppmpTable">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Description</th>
-              <th>Type</th>
-              <th>Quantity</th>
-              <th>Mode</th>
-              <th>Pre-Proc</th>
-              <th>Start</th>
-              <th>End</th>
-              <th>Implementation</th>
-              <th>Source</th>
-              <th>Budget (₱)</th>
-              <th>Docs</th>
-              <th>Remarks</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <div class="total-container">
-        <strong>Total Budget: ₱<span id="totalBudget">0</span></strong>
-      </div>
-    </section>
+            <div class="button-group">
+              <button type="button" id="addProject">➕ Add Project</button>
+              <button type="button" id="exportExcel">⬇️ Export to Excel / CSV</button>
+              <button type="button" id="printPPMP">🖨️ Print / Save as PDF</button>
+              
+              <button type="button" id="submitToDatabase" style="background: #198754; color: white;">🚀 Submit to Database</button>
+            </div>
+          </form>
+        </section>
 
-    <!-- Signature Area -->
-    <section class="signature-container">
-      <div>
-        <p>______________________________</p>
-        <p id="endUserName">(End-User / Implementing Unit)</p>
-        <p id="endUserDesignation"></p>
-      </div>
-      <div>
-        <p>______________________________</p>
-        <p id="headUnitName">(Head of Implementing Unit / Sector)</p>
-        <p id="headUnitDesignation"></p>
-      </div>
-    </section>
+        <section class="table-display">
+          <h3>Procurement Projects List</h3>
+          <div class="table-container">
+            <table id="ppmpTable">
+              <thead>
+                <tr>
+                  <th>#</th><th>Description</th><th>Type</th><th>Quantity</th><th>Mode</th>
+                  <th>Pre-Proc</th><th>Start</th><th>End</th><th>Implementation</th>
+                  <th>Source</th><th>Budget (₱)</th><th>Docs</th><th>Remarks</th><th>Action</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="total-container">
+            <strong>Total Budget: ₱<span id="totalBudget">0</span></strong>
+          </div>
+        </section>
 
-    <footer><p id="footerDate"></p></footer>
+        <section class="signature-container">
+          <div>
+            <p>______________________________</p>
+            <p id="endUserName">(End-User / Implementing Unit)</p>
+            <p id="endUserDesignation"></p>
+          </div>
+          <div>
+            <p>______________________________</p>
+            <p id="headUnitName">(Head of Implementing Unit / Sector)</p>
+            <p id="headUnitDesignation"></p>
+          </div>
+        </section>
 
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+        <footer><p id="footerDate"></p></footer>
+    </div> <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <script src="script.js"></script>
   </body>
