@@ -43,6 +43,19 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   });
 
+  document.getElementById('logoutBtn').addEventListener('click', function() {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user_name');
+      
+      document.getElementById('mainPpmpApp').style.display = 'none';
+      
+      document.getElementById('loginSection').style.display = 'flex';
+      
+      document.getElementById('emailInput').value = '';
+      document.getElementById('passwordInput').value = '';
+      document.getElementById('loginMessage').innerText = 'You have been logged out.';
+      document.getElementById('loginMessage').style.color = '#6c757d';
+  });
   // ==========================================
   // EXISTING PPMP LOGIC BELOW
   // ==========================================
