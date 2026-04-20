@@ -65,13 +65,31 @@
             <h2>PROJECT PROCUREMENT MANAGEMENT PLAN (PPMP)</h2>
             <div class="header-grid">
               <label>Fiscal Year: <input type="number" id="fiscalYear" /></label>
-              <label>End-User / Implementing Unit: <input type="text" id="unit" /></label>
-              <label>Office: <input type="text" id="office" /></label>
-              <label>Designation: <input type="text" id="unitDesignation" /></label>
+              
+              <label>Sector: 
+                <select id="sectorSelect" style="width: 100%; padding: 5px;">
+                  <option value="">Loading sectors...</option>
+                </select>
+              </label>
+
+              <label>Head of Implementing Unit / Sector: 
+                <input type="text" id="headUnit" readonly style="background: #e9ecef; cursor: not-allowed;" />
+              </label>
+              <label>Designation: 
+                <input type="text" id="headDesignation" readonly style="background: #e9ecef; cursor: not-allowed;" />
+              </label>
+              
+              <label>Office: 
+                <select id="office" disabled style="width: 100%; padding: 5px; background: #e9ecef;">
+                  <option value="">-- Select Sector First --</option>
+                </select>
+              </label>
+
+              <label>End-User / Implementing Unit: <input type="text" id="unit" readonly style="background: #e9ecef; cursor: not-allowed;" /></label>
+              <label>Designation: <input type="text" id="unitDesignation" readonly style="background: #e9ecef; cursor: not-allowed;" /></label>
+              
               <label><input type="checkbox" id="indicative" /> Indicative</label>
               <label><input type="checkbox" id="final" /> Final</label>
-              <label>Head of Implementing Unit / Sector: <input type="text" id="headUnit" /></label>
-              <label>Designation: <input type="text" id="headDesignation" /></label>
             </div>
           </div>
         </header>

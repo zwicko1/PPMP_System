@@ -1,7 +1,12 @@
 document.addEventListener("DOMContentLoaded", () => {
+  
   if (localStorage.getItem('auth_token')) {
       document.getElementById('loginSection').style.display = 'none';
       document.getElementById('mainPpmpApp').style.display = 'block';
+      const userName = localStorage.getItem('user_name');
+      if (userName) {
+          document.getElementById('welcomeUser').innerText = "Welcome, " + userName;
+      }
   }
 
   document.getElementById('loginBtn').addEventListener('click', function() {
@@ -26,11 +31,10 @@ document.addEventListener("DOMContentLoaded", () => {
               localStorage.setItem('auth_token', data.token);
               if(data.user && data.user.unit_name) {
                   localStorage.setItem('user_name', data.user.unit_name);
+                  document.getElementById('welcomeUser').innerText = "Welcome, " + data.user.unit_name;
               }
-        
               document.getElementById('loginSection').style.display = 'none';
               document.getElementById('mainPpmpApp').style.display = 'block';
-          
           } else {
               messageDisplay.style.color = "red";
               messageDisplay.innerText = data.message || "Login failed.";
@@ -46,22 +50,105 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById('logoutBtn').addEventListener('click', function() {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user_name');
-      
       document.getElementById('mainPpmpApp').style.display = 'none';
-      
       document.getElementById('loginSection').style.display = 'flex';
-      
       document.getElementById('emailInput').value = '';
       document.getElementById('passwordInput').value = '';
       document.getElementById('loginMessage').innerText = 'You have been logged out.';
       document.getElementById('loginMessage').style.color = '#6c757d';
   });
-  // ==========================================
-  // EXISTING PPMP LOGIC BELOW
-  // ==========================================
+
+  const sectorSelect = document.getElementById("sectorSelect");
+  const officeSelect = document.getElementById("office");
+  const unitInput = document.getElementById("unit"); 
+  const unitDesignationInput = document.getElementById("unitDesignation"); 
+  
+  let sectorsData = []; 
+
+  fetch('http://127.0.0.1:8000/api/sectors-offices')
+      .then(response => response.json())
+      .then(data => {
+          sectorsData = data;
+          sectorSelect.innerHTML = '<option value="">-- Select Sector --</option>';
+          sectorsData.forEach((sector, index) => {
+              const option = document.createElement('option');
+              option.value = index; 
+              option.textContent = sector.unit_name;
+              sectorSelect.appendChild(option);
+          });
+      })
+      .catch(error => {
+          console.error("Error fetching sectors:", error);
+          sectorSelect.innerHTML = '<option value="">Error loading sectors</option>';
+      });
+
+  const headUnitInput = document.getElementById("headUnit"); 
+  const headDesignationInput = document.getElementById("headDesignation");
+
+  sectorSelect.addEventListener("change", function() {
+      officeSelect.innerHTML = '<option value="">-- Select Office --</option>';
+      unitInput.value = "";
+      unitDesignationInput.value = "";
+      headUnitInput.value = "";
+      headDesignationInput.value = "";
+      
+      if (this.value === "") {
+          officeSelect.disabled = true;
+          officeSelect.style.background = "#e9ecef";
+          return;
+      }
+
+      officeSelect.disabled = false;
+      officeSelect.style.background = "#ffffff";
+
+      const selectedSector = sectorsData[this.value];
+
+      headUnitInput.value = selectedSector.unit_head || '';
+      headDesignationInput.value = selectedSector.unit_designation || '';
+
+      if (selectedSector.offices && selectedSector.offices.length > 0) {
+          
+          const nameCounts = {};
+          selectedSector.offices.forEach(office => {
+              nameCounts[office.name] = (nameCounts[office.name] || 0) + 1;
+          });
+
+          selectedSector.offices.forEach(office => {
+              const option = document.createElement('option');
+              
+              let displayText = office.name;
+              
+              if (nameCounts[office.name] > 1) {
+                  const designation = office.office_head_designation || 'No Designation';
+                  displayText = `${office.name} (${designation})`;
+              }
+
+              option.value = displayText; 
+              option.textContent = displayText;
+              
+              option.dataset.headName = office.office_head_name || '';
+              option.dataset.headDesignation = office.office_head_designation || '';
+              
+              officeSelect.appendChild(option);
+          });
+      } else {
+          officeSelect.innerHTML = '<option value="">No offices found in this sector</option>';
+      }
+  });
+
+  officeSelect.addEventListener("change", function() {
+      const selectedOption = officeSelect.options[officeSelect.selectedIndex];
+      if (this.value !== "") {
+          unitInput.value = selectedOption.dataset.headName;
+          unitDesignationInput.value = selectedOption.dataset.headDesignation;
+      } else {
+          unitInput.value = "";
+          unitDesignationInput.value = "";
+      }
+  });
 
   const fiscalYear = document.getElementById("fiscalYear");
-  fiscalYear.value = new Date().getFullYear() + 1; // ✅ Auto next year
+  fiscalYear.value = new Date().getFullYear() + 1; 
   
   const nextYear = new Date().getFullYear() + 1;
   flatpickr(".month-picker", {
@@ -76,7 +163,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const totalBudgetEl = document.getElementById("totalBudget");
   const addBtn = document.getElementById("addProject");
 
-  // Add or Update project
   addBtn.addEventListener("click", () => {
     const data = {
       description: document.getElementById("description").value.trim(),
@@ -177,7 +263,9 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("headUnitDesignation").textContent = document.getElementById("headDesignation").value || "";
     document.getElementById("footerDate").textContent = `Generated on ${new Date().toLocaleString()}`;
 
-    const officeName = document.getElementById("office").value || "";
+    const officeSelect = document.getElementById("office");
+    const officeName = officeSelect.options[officeSelect.selectedIndex]?.text || "";
+    
     const headerHTML = `
         <div style="display:flex;align-items:center;gap:10px;">
             <img src="assets/tup_logo.png" width="80" height="80" style="margin-right:10px;">
@@ -205,6 +293,7 @@ document.addEventListener("DOMContentLoaded", () => {
     newWin.print();
   };
 
+  // 🌟 6. SUBMIT TO LARAVEL API
   document.getElementById("submitToDatabase").onclick = () => {
       const token = localStorage.getItem('auth_token');
       
@@ -219,26 +308,28 @@ document.addEventListener("DOMContentLoaded", () => {
           return alert("Please add at least one project before submitting.");
       }
 
+      const officeSelect = document.getElementById("office");
+      const selectedOfficeName = officeSelect.options[officeSelect.selectedIndex]?.text;
+
       const payload = {
           fiscal_year: document.getElementById("fiscalYear").value,
           implementing_unit: document.getElementById("unit").value,
-          office: document.getElementById("office").value,
+          office: selectedOfficeName,
           is_indicative: document.getElementById("indicative").checked,
           is_final: document.getElementById("final").checked,
-          items: projects
+          items: projects 
       };
 
       const btn = document.getElementById("submitToDatabase");
       btn.innerText = "Submitting...";
       btn.disabled = true;
 
-      // Send it to Laravel
       fetch('http://127.0.0.1:8000/api/ppmp/submit', {
           method: 'POST',
           headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json',
-              'Authorization': `Bearer ${token}`
+              'Authorization': `Bearer ${token}` 
           },
           body: JSON.stringify(payload)
       })
