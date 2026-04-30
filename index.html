@@ -67,26 +67,15 @@
               <label>Fiscal Year: <input type="number" id="fiscalYear" /></label>
               
               <label>Sector: 
-                <select id="sectorSelect" style="width: 100%; padding: 5px;">
-                  <option value="">Loading sectors...</option>
-                </select>
+                <input type="text" id="sectorInput" readonly style="background: #e9ecef; cursor: not-allowed; width: 100%; padding: 5px;" placeholder="Loading..." />
               </label>
 
-              <label>Head of Implementing Unit / Sector: 
+              <label>Head of Sector: 
                 <input type="text" id="headUnit" readonly style="background: #e9ecef; cursor: not-allowed;" />
               </label>
               <label>Designation: 
                 <input type="text" id="headDesignation" readonly style="background: #e9ecef; cursor: not-allowed;" />
               </label>
-              
-              <label>Office: 
-                <select id="office" disabled style="width: 100%; padding: 5px; background: #e9ecef;">
-                  <option value="">-- Select Sector First --</option>
-                </select>
-              </label>
-
-              <label>End-User / Implementing Unit: <input type="text" id="unit" readonly style="background: #e9ecef; cursor: not-allowed;" /></label>
-              <label>Designation: <input type="text" id="unitDesignation" readonly style="background: #e9ecef; cursor: not-allowed;" /></label>
               
               <label><input type="checkbox" id="indicative" /> Indicative</label>
               <label><input type="checkbox" id="final" /> Final</label>
@@ -183,12 +172,7 @@
         <section class="signature-container">
           <div>
             <p>______________________________</p>
-            <p id="endUserName">(End-User / Implementing Unit)</p>
-            <p id="endUserDesignation"></p>
-          </div>
-          <div>
-            <p>______________________________</p>
-            <p id="headUnitName">(Head of Implementing Unit / Sector)</p>
+            <p id="headUnitName">(Head of Sector)</p>
             <p id="headUnitDesignation"></p>
           </div>
         </section>

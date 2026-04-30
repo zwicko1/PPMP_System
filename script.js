@@ -27,19 +27,24 @@ document.addEventListener("DOMContentLoaded", () => {
       })
       .then(response => response.json())
       .then(data => {
-          if (data.token) {
-              localStorage.setItem('auth_token', data.token);
-              if(data.user && data.user.unit_name) {
-                  localStorage.setItem('user_name', data.user.unit_name);
-                  document.getElementById('welcomeUser').innerText = "Welcome, " + data.user.unit_name;
-              }
-              document.getElementById('loginSection').style.display = 'none';
-              document.getElementById('mainPpmpApp').style.display = 'block';
-          } else {
-              messageDisplay.style.color = "red";
-              messageDisplay.innerText = data.message || "Login failed.";
-          }
-      })
+            if (data.token) {
+                localStorage.setItem('auth_token', data.token);
+                
+                if(data.user) {
+                    localStorage.setItem('user_data', JSON.stringify(data.user));
+                    localStorage.setItem('user_name', data.user.unit_name);
+                    document.getElementById('welcomeUser').innerText = "Welcome, " + data.user.unit_name;
+                }
+                
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('mainPpmpApp').style.display = 'block';
+                
+                loadUserData(); 
+            } else {
+                messageDisplay.style.color = "red";
+                messageDisplay.innerText = data.message || "Login failed.";
+            }
+        })
       .catch(error => {
           console.error("Error logging in:", error);
           messageDisplay.style.color = "red";
@@ -50,6 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById('logoutBtn').addEventListener('click', function() {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user_name');
+      localStorage.removeItem('user_data');
       document.getElementById('mainPpmpApp').style.display = 'none';
       document.getElementById('loginSection').style.display = 'flex';
       document.getElementById('emailInput').value = '';
@@ -58,97 +64,28 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById('loginMessage').style.color = '#6c757d';
   });
 
-  const sectorSelect = document.getElementById("sectorSelect");
-  const officeSelect = document.getElementById("office");
-  const unitInput = document.getElementById("unit"); 
-  const unitDesignationInput = document.getElementById("unitDesignation"); 
-  
-  let sectorsData = []; 
-
-  fetch('http://127.0.0.1:8000/api/sectors-offices')
-      .then(response => response.json())
-      .then(data => {
-          sectorsData = data;
-          sectorSelect.innerHTML = '<option value="">-- Select Sector --</option>';
-          sectorsData.forEach((sector, index) => {
-              const option = document.createElement('option');
-              option.value = index; 
-              option.textContent = sector.unit_name;
-              sectorSelect.appendChild(option);
-          });
-      })
-      .catch(error => {
-          console.error("Error fetching sectors:", error);
-          sectorSelect.innerHTML = '<option value="">Error loading sectors</option>';
-      });
-
+  const sectorInput = document.getElementById("sectorInput");
   const headUnitInput = document.getElementById("headUnit"); 
   const headDesignationInput = document.getElementById("headDesignation");
 
-  sectorSelect.addEventListener("change", function() {
-      officeSelect.innerHTML = '<option value="">-- Select Office --</option>';
-      unitInput.value = "";
-      unitDesignationInput.value = "";
-      headUnitInput.value = "";
-      headDesignationInput.value = "";
+  function loadUserData() {
+      const userDataStr = localStorage.getItem('user_data');
       
-      if (this.value === "") {
-          officeSelect.disabled = true;
-          officeSelect.style.background = "#e9ecef";
-          return;
-      }
+      if (!userDataStr) return;
 
-      officeSelect.disabled = false;
-      officeSelect.style.background = "#ffffff";
+      const user = JSON.parse(userDataStr);
 
-      const selectedSector = sectorsData[this.value];
+      if (sectorInput) sectorInput.value = user.unit_name || 'N/A';
+      if (headUnitInput) headUnitInput.value = user.unit_head || '';
+      if (headDesignationInput) headDesignationInput.value = user.unit_designation || '';
+  }
 
-      headUnitInput.value = selectedSector.unit_head || '';
-      headDesignationInput.value = selectedSector.unit_designation || '';
-
-      if (selectedSector.offices && selectedSector.offices.length > 0) {
-          
-          const nameCounts = {};
-          selectedSector.offices.forEach(office => {
-              nameCounts[office.name] = (nameCounts[office.name] || 0) + 1;
-          });
-
-          selectedSector.offices.forEach(office => {
-              const option = document.createElement('option');
-              
-              let displayText = office.name;
-              
-              if (nameCounts[office.name] > 1) {
-                  const designation = office.office_head_designation || 'No Designation';
-                  displayText = `${office.name} (${designation})`;
-              }
-
-              option.value = displayText; 
-              option.textContent = displayText;
-              
-              option.dataset.headName = office.office_head_name || '';
-              option.dataset.headDesignation = office.office_head_designation || '';
-              
-              officeSelect.appendChild(option);
-          });
-      } else {
-          officeSelect.innerHTML = '<option value="">No offices found in this sector</option>';
-      }
-  });
-
-  officeSelect.addEventListener("change", function() {
-      const selectedOption = officeSelect.options[officeSelect.selectedIndex];
-      if (this.value !== "") {
-          unitInput.value = selectedOption.dataset.headName;
-          unitDesignationInput.value = selectedOption.dataset.headDesignation;
-      } else {
-          unitInput.value = "";
-          unitDesignationInput.value = "";
-      }
-  });
+  if (localStorage.getItem('auth_token')) {
+      loadUserData();
+  }
 
   const fiscalYear = document.getElementById("fiscalYear");
-  fiscalYear.value = new Date().getFullYear() + 1; 
+  if(fiscalYear) fiscalYear.value = new Date().getFullYear() + 1; 
   
   const nextYear = new Date().getFullYear() + 1;
   flatpickr(".month-picker", {
@@ -163,37 +100,40 @@ document.addEventListener("DOMContentLoaded", () => {
   const totalBudgetEl = document.getElementById("totalBudget");
   const addBtn = document.getElementById("addProject");
 
-  addBtn.addEventListener("click", () => {
-    const data = {
-      description: document.getElementById("description").value.trim(),
-      type: document.getElementById("type").value,
-      quantity: document.getElementById("quantity").value.trim(),
-      mode: document.getElementById("mode").value,
-      preProc: document.getElementById("preProc").value,
-      start: document.getElementById("startDate").value,
-      end: document.getElementById("endDate").value,
-      implementation: document.getElementById("implementation").value,
-      source: document.getElementById("source").value,
-      budget: parseFloat(document.getElementById("budget").value) || 0,
-      docs: document.getElementById("docs").value.trim(),
-      remarks: document.getElementById("remarks").value.trim(),
-    };
+  if(addBtn) {
+      addBtn.addEventListener("click", () => {
+        const data = {
+          description: document.getElementById("description").value.trim(),
+          type: document.getElementById("type").value,
+          quantity: document.getElementById("quantity").value.trim(),
+          mode: document.getElementById("mode").value,
+          preProc: document.getElementById("preProc").value,
+          start: document.getElementById("startDate").value,
+          end: document.getElementById("endDate").value,
+          implementation: document.getElementById("implementation").value,
+          source: document.getElementById("source").value,
+          budget: parseFloat(document.getElementById("budget").value) || 0,
+          docs: document.getElementById("docs").value.trim(),
+          remarks: document.getElementById("remarks").value.trim(),
+        };
 
-    if (!data.description) return alert("Please fill in all required fields.");
+        if (!data.description) return alert("Please fill in all required fields.");
 
-    if (editIndex !== null) {
-      projects[editIndex] = data;
-      editIndex = null;
-      addBtn.textContent = "➕ Add Project";
-    } else {
-      projects.push(data);
-    }
+        if (editIndex !== null) {
+          projects[editIndex] = data;
+          editIndex = null;
+          addBtn.textContent = "➕ Add Project";
+        } else {
+          projects.push(data);
+        }
 
-    renderTable();
-    document.getElementById("projectForm").reset();
-  });
+        renderTable();
+        document.getElementById("projectForm").reset();
+      });
+  }
 
   function renderTable() {
+    if(!tableBody) return;
     tableBody.innerHTML = "";
     let total = 0;
     projects.forEach((p, i) => {
@@ -219,7 +159,7 @@ document.addEventListener("DOMContentLoaded", () => {
           </td>`;
       tableBody.appendChild(row);
     });
-    totalBudgetEl.textContent = total.toLocaleString();
+    if(totalBudgetEl) totalBudgetEl.textContent = total.toLocaleString();
   }
 
   window.editProject = (index) => {
@@ -238,7 +178,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("remarks").value = p.remarks;
 
     editIndex = index;
-    addBtn.textContent = "💾 Update Project";
+    if(addBtn) addBtn.textContent = "💾 Update Project";
   };
 
   window.deleteProject = (index) => {
@@ -248,108 +188,106 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  document.getElementById("exportExcel").onclick = () => {
-    if (projects.length === 0) return alert("No projects to export.");
-    const ws = XLSX.utils.json_to_sheet(projects);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "PPMP Projects");
-    XLSX.writeFile(wb, "PPMP_Projects.xlsx");
-  };
-
-  document.getElementById("printPPMP").onclick = () => {
-    document.getElementById("endUserName").textContent = document.getElementById("unit").value || "(End-User / Implementing Unit)";
-    document.getElementById("endUserDesignation").textContent = document.getElementById("unitDesignation").value || "";
-    document.getElementById("headUnitName").textContent = document.getElementById("headUnit").value || "(Head of Implementing Unit / Sector)";
-    document.getElementById("headUnitDesignation").textContent = document.getElementById("headDesignation").value || "";
-    document.getElementById("footerDate").textContent = `Generated on ${new Date().toLocaleString()}`;
-
-    const officeSelect = document.getElementById("office");
-    const officeName = officeSelect.options[officeSelect.selectedIndex]?.text || "";
-    
-    const headerHTML = `
-        <div style="display:flex;align-items:center;gap:10px;">
-            <img src="assets/tup_logo.png" width="80" height="80" style="margin-right:10px;">
-            <div>
-            <h2 style="margin:0;">Technological University of the Philippines - Manila</h2>
-            <h3 style="margin:0;">Project Procurement Management Plan (PPMP)</h3>
-            <h3 style="margin:0;font-size:14px;">Office: ${officeName}</h3>
-            </div>
-        </div><hr>`;
-
-    const content = document.querySelector(".table-display").outerHTML + document.querySelector(".signature-container").outerHTML + document.querySelector("footer").outerHTML;
-
-    const newWin = window.open("", "_blank");
-    newWin.document.write(`
-        <html><head><title>PPMP Print</title>
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap" rel="stylesheet">
-        <style>
-          body { font-family:'Poppins',sans-serif;margin:20px; }
-          table { width:100%;border-collapse:collapse; }
-          th,td { border:1px solid #ccc;padding:6px;text-align:center; }
-          .signature-container { display:flex;justify-content:space-around;margin-top:40px;text-align:center; }
-        </style>
-        </head><body>${headerHTML}${content}</body></html>`);
-    newWin.document.close();
-    newWin.print();
-  };
-
-  // 🌟 6. SUBMIT TO LARAVEL API
-  document.getElementById("submitToDatabase").onclick = () => {
-      const token = localStorage.getItem('auth_token');
-      
-      if (!token) {
-          alert("Security Error: You must be logged in to submit.");
-          document.getElementById('mainPpmpApp').style.display = 'none';
-          document.getElementById('loginSection').style.display = 'flex';
-          return;
-      }
-
-      if (projects.length === 0) {
-          return alert("Please add at least one project before submitting.");
-      }
-
-      const officeSelect = document.getElementById("office");
-      const selectedOfficeName = officeSelect.options[officeSelect.selectedIndex]?.text;
-
-      const payload = {
-          fiscal_year: document.getElementById("fiscalYear").value,
-          implementing_unit: document.getElementById("unit").value,
-          office: selectedOfficeName,
-          is_indicative: document.getElementById("indicative").checked,
-          is_final: document.getElementById("final").checked,
-          items: projects 
+  const exportBtn = document.getElementById("exportExcel");
+  if(exportBtn) {
+      exportBtn.onclick = () => {
+        if (projects.length === 0) return alert("No projects to export.");
+        const ws = XLSX.utils.json_to_sheet(projects);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "PPMP Projects");
+        XLSX.writeFile(wb, "PPMP_Projects.xlsx");
       };
+  }
 
-      const btn = document.getElementById("submitToDatabase");
-      btn.innerText = "Submitting...";
-      btn.disabled = true;
+  const printBtn = document.getElementById("printPPMP");
+  if(printBtn) {
+      printBtn.onclick = () => {
+        // Only the Sector Head details are injected into the print view now
+        document.getElementById("headUnitName").textContent = document.getElementById("headUnit").value || "(Head of Sector)";
+        document.getElementById("headUnitDesignation").textContent = document.getElementById("headDesignation").value || "";
+        document.getElementById("footerDate").textContent = `Generated on ${new Date().toLocaleString()}`;
+        
+        const headerHTML = `
+            <div style="display:flex;align-items:center;gap:10px;">
+                <img src="assets/tup_logo.png" width="80" height="80" style="margin-right:10px;">
+                <div>
+                <h2 style="margin:0;">Technological University of the Philippines - Manila</h2>
+                <h3 style="margin:0;">Project Procurement Management Plan (PPMP)</h3>
+                </div>
+            </div><hr>`;
 
-      fetch('http://127.0.0.1:8000/api/ppmp/submit', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'Authorization': `Bearer ${token}` 
-          },
-          body: JSON.stringify(payload)
-      })
-      .then(response => response.json())
-      .then(data => {
-          btn.innerText = "🚀 Submit to Database";
-          btn.disabled = false;
+        const content = document.querySelector(".table-display").outerHTML + document.querySelector(".signature-container").outerHTML + document.querySelector("footer").outerHTML;
+
+        const newWin = window.open("", "_blank");
+        newWin.document.write(`
+            <html><head><title>PPMP Print</title>
+            <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap" rel="stylesheet">
+            <style>
+              body { font-family:'Poppins',sans-serif;margin:20px; }
+              table { width:100%;border-collapse:collapse; }
+              th,td { border:1px solid #ccc;padding:6px;text-align:center; }
+              .signature-container { display:flex;justify-content:space-around;margin-top:40px;text-align:center; }
+            </style>
+            </head><body>${headerHTML}${content}</body></html>`);
+        newWin.document.close();
+        newWin.print();
+      };
+  }
+
+  const submitBtn = document.getElementById("submitToDatabase");
+  if(submitBtn) {
+      submitBtn.onclick = () => {
+          const token = localStorage.getItem('auth_token');
           
-          if(data.status === 'success') {
-              alert("PPMP Successfully Saved to the Database!");
-          } else {
-              alert("Error saving: " + (data.message || "Unknown error"));
+          if (!token) {
+              alert("Security Error: You must be logged in to submit.");
+              document.getElementById('mainPpmpApp').style.display = 'none';
+              document.getElementById('loginSection').style.display = 'flex';
+              return;
           }
-      })
-      .catch(error => {
-          console.error("Submission Error:", error);
-          btn.innerText = "🚀 Submit to Database";
-          btn.disabled = false;
-          alert("Failed to connect to the server.");
-      });
-  };
 
+          if (projects.length === 0) {
+              return alert("Please add at least one project before submitting.");
+          }
+
+          // Removed implementing_unit from the payload
+          const payload = {
+              fiscal_year: document.getElementById("fiscalYear").value,
+              is_indicative: document.getElementById("indicative").checked,
+              is_final: document.getElementById("final").checked,
+              items: projects 
+          };
+
+          const btn = document.getElementById("submitToDatabase");
+          btn.innerText = "Submitting...";
+          btn.disabled = true;
+
+          fetch('http://127.0.0.1:8000/api/ppmp/submit', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json',
+                  'Authorization': `Bearer ${token}` 
+              },
+              body: JSON.stringify(payload)
+          })
+          .then(response => response.json())
+          .then(data => {
+              btn.innerText = "🚀 Submit to Database";
+              btn.disabled = false;
+              
+              if(data.status === 'success') {
+                  alert("PPMP Successfully Saved to the Database!");
+              } else {
+                  alert("Error saving: " + (data.message || "Unknown error"));
+              }
+          })
+          .catch(error => {
+              console.error("Submission Error:", error);
+              btn.innerText = "🚀 Submit to Database";
+              btn.disabled = false;
+              alert("Failed to connect to the server.");
+          });
+      };
+  }
 });
