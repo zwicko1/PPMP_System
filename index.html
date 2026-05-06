@@ -120,9 +120,12 @@
                   <option>No</option>
                 </select>
               </div>
-              <div><label>Start Date:</label><input type="text" id="startDate" class="month-picker" required /></div>
-              <div><label>End Date:</label><input type="text" id="endDate" class="month-picker" required /></div>
-              <div><label>Implementation Period:</label><input type="text" id="implementation" class="month-picker" required /></div>
+              <div><label>Start Date:</label><input type="month" id="startDate" required /></div>
+              <div>
+                  <label>End Date:</label>
+                  <input type="month" id="endDate" required readonly style="background: #e9ecef; cursor: not-allowed;" />
+              </div>
+              <div><label>Implementation Period:</label><input type="month" id="implementation" required /></div>
               <div>
                 <label>Source of Funds:</label>
                 <select id="source">
@@ -181,5 +184,38 @@
     </div> <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <script src="script.js"></script>
+
+    <!-- ================= ADMIN DASHBOARD ================= -->
+    <div id="adminPpmpApp" style="display: none;">
+        <div style="text-align: right; padding: 10px 20px; background: white; border-bottom: 1px solid #ddd;">
+            <span style="margin-right: 15px; font-weight: 500; color: #c14f3b;">🛡️ Administrator Mode</span>
+            <a href="assign-budget.html" style="background: #0d6efd; color: white; text-decoration: none; padding: 8px 15px; border-radius: 4px; font-weight: 600; margin-right: 10px;">💰 Manage Budgets</a>
+            <button class="logoutBtn" style="background: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: 600;">🚪 Logout</button>
+        </div>
+        
+        <header class="header">
+            <div class="header-content">
+                <h1>TUP Manila - Procurement Command Center</h1>
+                <h2>PPMP APPROVAL DASHBOARD</h2>
+            </div>
+        </header>
+
+        <section class="table-display">
+            <table id="adminPpmpTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Fiscal Year</th>
+                        <th>Sector</th>
+                        <th>Total Budget (₱)</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </section>
+    </div>
   </body>
 </html>

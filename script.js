@@ -1,11 +1,18 @@
 document.addEventListener("DOMContentLoaded", () => {
   
   if (localStorage.getItem('auth_token')) {
-      document.getElementById('loginSection').style.display = 'none';
-      document.getElementById('mainPpmpApp').style.display = 'block';
-      const userName = localStorage.getItem('user_name');
-      if (userName) {
-          document.getElementById('welcomeUser').innerText = "Welcome, " + userName;
+      const userDataStr = localStorage.getItem('user_data');
+      if (userDataStr) {
+          const user = JSON.parse(userDataStr);
+          if (user.role_id === 1) {
+              localStorage.clear();
+              window.location.replace("admin.html"); 
+          } else {
+              document.getElementById('loginSection').style.display = 'none';
+              document.getElementById('mainPpmpApp').style.display = 'block';
+              document.getElementById('welcomeUser').innerText = "Welcome, " + (user.unit_name || "");
+              loadUserData();
+          }
       }
   }
 
@@ -18,52 +25,44 @@ document.addEventListener("DOMContentLoaded", () => {
       messageDisplay.innerText = "Authenticating...";
 
       fetch('http://127.0.0.1:8000/api/login', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-          },
-          body: JSON.stringify({ email: email, password: password })
-      })
-      .then(response => response.json())
-      .then(data => {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ email: email, password: password })
+        })
+        .then(response => response.json())
+        .then(data => {
             if (data.token) {
-                localStorage.setItem('auth_token', data.token);
-                
-                if(data.user) {
-                    localStorage.setItem('user_data', JSON.stringify(data.user));
-                    localStorage.setItem('user_name', data.user.unit_name);
-                    document.getElementById('welcomeUser').innerText = "Welcome, " + data.user.unit_name;
+                if (data.user.role_id === 1) {
+                    messageDisplay.style.color = "orange";
+                    messageDisplay.innerText = "Redirecting to Admin Portal...";
+                    window.location.href = "admin.html";
+                    return;
                 }
+
+                localStorage.setItem('auth_token', data.token);
+                localStorage.setItem('user_data', JSON.stringify(data.user));
                 
                 document.getElementById('loginSection').style.display = 'none';
                 document.getElementById('mainPpmpApp').style.display = 'block';
-                
+                document.getElementById('welcomeUser').innerText = "Welcome, " + data.user.unit_name;
                 loadUserData(); 
             } else {
                 messageDisplay.style.color = "red";
                 messageDisplay.innerText = data.message || "Login failed.";
             }
         })
-      .catch(error => {
-          console.error("Error logging in:", error);
-          messageDisplay.style.color = "red";
-          messageDisplay.innerText = "Could not connect to server.";
-      });
+        .catch(error => { console.error("Login error:", error); });
   });
 
-  document.getElementById('logoutBtn').addEventListener('click', function() {
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('user_name');
-      localStorage.removeItem('user_data');
-      document.getElementById('mainPpmpApp').style.display = 'none';
-      document.getElementById('loginSection').style.display = 'flex';
-      document.getElementById('emailInput').value = '';
-      document.getElementById('passwordInput').value = '';
-      document.getElementById('loginMessage').innerText = 'You have been logged out.';
-      document.getElementById('loginMessage').style.color = '#6c757d';
-  });
-
+ 
+ document.addEventListener('click', function(e) {
+     const clickedLogout = e.target.closest('#logoutBtn');
+    
+     if (clickedLogout) {
+         localStorage.clear();
+         window.location.replace('index.html');
+     }
+ });
   const sectorInput = document.getElementById("sectorInput");
   const headUnitInput = document.getElementById("headUnit"); 
   const headDesignationInput = document.getElementById("headDesignation");
@@ -86,12 +85,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const fiscalYear = document.getElementById("fiscalYear");
   if(fiscalYear) fiscalYear.value = new Date().getFullYear() + 1; 
-  
-  const nextYear = new Date().getFullYear() + 1;
-  flatpickr(".month-picker", {
-    dateFormat: "m/Y",
-    defaultDate: `01/01/${nextYear}`,
-  });
+
+  const startDateInput = document.getElementById('startDate');
+  const endDateInput = document.getElementById('endDate');
+
+  if (startDateInput && endDateInput) {
+      startDateInput.addEventListener('change', function() {
+          if (!this.value) return; 
+
+          const parts = this.value.split('-');
+          let year = parseInt(parts[0], 10);
+          let month = parseInt(parts[1], 10);
+
+          month += 1;
+
+          if (month > 12) {
+              month = 1;
+              year += 1;
+          }
+
+          const nextMonthString = month.toString().padStart(2, '0');
+
+          endDateInput.value = `${year}-${nextMonthString}`;
+      });
+  }
 
   const projects = [];
   let editIndex = null;
@@ -202,7 +219,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const printBtn = document.getElementById("printPPMP");
   if(printBtn) {
       printBtn.onclick = () => {
-        // Only the Sector Head details are injected into the print view now
         document.getElementById("headUnitName").textContent = document.getElementById("headUnit").value || "(Head of Sector)";
         document.getElementById("headUnitDesignation").textContent = document.getElementById("headDesignation").value || "";
         document.getElementById("footerDate").textContent = `Generated on ${new Date().toLocaleString()}`;
@@ -250,7 +266,6 @@ document.addEventListener("DOMContentLoaded", () => {
               return alert("Please add at least one project before submitting.");
           }
 
-          // Removed implementing_unit from the payload
           const payload = {
               fiscal_year: document.getElementById("fiscalYear").value,
               is_indicative: document.getElementById("indicative").checked,
