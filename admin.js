@@ -275,43 +275,32 @@ document.addEventListener("DOMContentLoaded", () => {
         const tbody = document.getElementById('adminPendingTableBody') || document.querySelector("#adminPpmpTable tbody");
         if(!tbody) return;
 
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: #6c757d;">Loading pending submissions...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #6c757d;">Loading dashboard...</td></tr>';
 
-        fetch('http://127.0.0.1:8000/api/admin/ppmps/pending', {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json'
-            }
+        // NEW: Fetch ALL PPMPs from the new route
+        fetch('http://127.0.0.1:8000/api/admin/ppmps/all', {
+            headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
         })
         .then(response => response.json())
         .then(data => {
             tbody.innerHTML = ''; 
 
             if (!data.data || data.data.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="5" style="text-align:center; padding: 40px; color: #198754; font-weight: bold; font-size: 1.1rem;">
-                            🎉 All caught up! No pending PPMPs to review.
-                        </td>
-                    </tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: #6c757d; font-style: italic;">No PPMPs have been submitted yet.</td></tr>`;
                 return;
             }
 
-            // ==========================================
             // ALGORITHM: Group data by Sector AND Year
-            // ==========================================
             const groupedPpmps = {};
             data.data.forEach(ppmp => {
-                // Creates a unique key like "3_2027"
                 const key = `${ppmp.user_id}_${ppmp.fiscal_year}`;
                 if(!groupedPpmps[key]) groupedPpmps[key] = [];
                 groupedPpmps[key].push(ppmp);
             });
 
-            // ==========================================
             // RENDER: Loop through each group
-            // ==========================================
             Object.values(groupedPpmps).forEach(group => {
+                // Sort the group so highest version is index 0
                 group.sort((a, b) => b.version - a.version);
 
                 const latest = group[0];
@@ -321,41 +310,61 @@ document.addEventListener("DOMContentLoaded", () => {
                 const latestDateObj = new Date(latest.created_at);
                 const latestNiceDate = latestDateObj.toLocaleDateString() + ' ' + latestDateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
+                // Determine the Master Status and Action Button for the Latest Version
+                let statusBadge = '';
+                let actionBtn = '';
+
+                // Assuming DB Statuses: 2=Pending, 3=Approved, 4=Rejected/Returned
+                if (latest.status_id === 2) {
+                    // Check if this is a pending revision of a PREVIOUSLY approved PPMP
+                    let isRevisionOfApproved = false;
+                    if (olderRevisions.length > 0 && olderRevisions[0].status_id === 3) {
+                        isRevisionOfApproved = true;
+                    }
+
+                    if (isRevisionOfApproved) {
+                        statusBadge = `<span style="background: #fd7e14; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: bold; color: #fff;">Pending (Revision)</span>`;
+                    } else {
+                        statusBadge = `<span style="background: #ffc107; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: bold; color: #000;">Pending Approval</span>`;
+                    }
+                    actionBtn = `<button onclick="reviewPpmp(${latest.id})" style="background-color: #0d6efd; color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">🔍 Review</button>`;
+                
+                } else if (latest.status_id === 3) {
+                    statusBadge = `<span style="background: #198754; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: bold; color: #fff;">✅ Approved</span>`;
+                    actionBtn = `<button onclick="viewOldPpmp(${latest.id})" style="background-color: #6c757d; color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px; font-weight: bold;">👁️ View Latest</button>`;
+                
+                } else if (latest.status_id === 4) {
+                    statusBadge = `<span style="background: #dc3545; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: bold; color: #fff;">❌ Returned</span>`;
+                    actionBtn = `<button onclick="viewOldPpmp(${latest.id})" style="background-color: #6c757d; color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px; font-weight: bold;">👁️ View Latest</button>`;
+                }
+
+                // Expand button for older revisions
                 let expandBtn = '';
                 if (olderRevisions.length > 0) {
                     expandBtn = `<br><button onclick="toggleRevisions('rev-${latest.id}')" style="background: none; border: none; color: #0d6efd; font-size: 0.8em; text-decoration: underline; cursor: pointer; padding: 0; margin-top: 5px;">[+] View ${olderRevisions.length} Older Revision(s)</button>`;
                 }
 
+                // Render Main Row
                 const mainRow = document.createElement('tr');
                 mainRow.style.borderBottom = olderRevisions.length > 0 ? "none" : "1px solid #eee";
                 mainRow.style.background = "#fff";
                 
                 mainRow.innerHTML = `
-                    <td style="padding: 15px;">
-                        <strong>${sectorName}</strong>
-                        ${expandBtn}
-                    </td>
+                    <td style="padding: 15px;"><strong>${sectorName}</strong>${expandBtn}</td>
                     <td style="padding: 15px; font-weight: 600;">${latest.fiscal_year}</td>
-                    <td style="padding: 15px;">
-                        <span style="background: #ffc107; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: bold; color: #000;">
-                            v${latest.version} (Latest)
-                        </span>
-                    </td>
+                    <td style="padding: 15px;"><span style="background: #e9ecef; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: bold; color: #333;">v${latest.version} (Active)</span></td>
                     <td style="padding: 15px; color: #333;">${latestNiceDate}</td>
-                    <td style="padding: 15px; text-align: center;">
-                        <button onclick="reviewPpmp(${latest.id})" style="background-color: #0d6efd; color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                            🔍 Review
-                        </button>
-                    </td>
+                    <td style="padding: 15px; text-align: center;">${statusBadge}</td>
+                    <td style="padding: 15px; text-align: center;">${actionBtn}</td>
                 `;
                 tbody.appendChild(mainRow);
 
+                // Render Older Revisions (Strictly Read-Only)
                 olderRevisions.forEach((old, index) => {
                     const oldRow = document.createElement('tr');
                     oldRow.className = `rev-${latest.id}`;
-                    oldRow.style.display = 'none';
-                    oldRow.style.background = '#f8f9fa';
-                    
+                    oldRow.style.display = 'none'; 
+                    oldRow.style.background = '#f8f9fa'; 
                     oldRow.style.borderBottom = index === olderRevisions.length - 1 ? "1px solid #eee" : "none";
 
                     const oldDateObj = new Date(old.created_at);
@@ -364,24 +373,18 @@ document.addEventListener("DOMContentLoaded", () => {
                     oldRow.innerHTML = `
                         <td style="padding: 10px 15px 10px 40px; color: #6c757d; font-size: 0.9em;">↳ Older Revision</td>
                         <td style="padding: 10px 15px; color: #6c757d; font-size: 0.9em;">${old.fiscal_year}</td>
-                        <td style="padding: 10px 15px;">
-                            <span style="background: #e9ecef; padding: 3px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold; color: #6c757d;">
-                                v${old.version}
-                            </span>
-                        </td>
+                        <td style="padding: 10px 15px;"><span style="background: #e9ecef; padding: 3px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold; color: #6c757d;">v${old.version}</span></td>
                         <td style="padding: 10px 15px; color: #6c757d; font-size: 0.9em;">${oldNiceDate}</td>
+                        <td style="padding: 10px 15px; text-align: center;"><span style="color: #adb5bd; font-size: 0.85em; font-style: italic;">Archived</span></td>
                         <td style="padding: 10px 15px; text-align: center;">
-                            <button onclick="viewOldPpmp(${old.id})" style="background-color: #6c757d; color: white; border: none; padding: 4px 10px; cursor: pointer; border-radius: 4px; font-size: 0.85em; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
-                                👁️ View Only
-                            </button>
-                            <div style="color: #adb5bd; font-size: 0.75em; font-style: italic; margin-top: 4px;">Superseded by v${latest.version}</div>
+                            <button onclick="viewOldPpmp(${old.id})" style="background-color: #6c757d; color: white; border: none; padding: 4px 10px; cursor: pointer; border-radius: 4px; font-size: 0.85em; font-weight: bold;">👁️ View Only</button>
                         </td>
                     `;
                     tbody.appendChild(oldRow);
                 });
             });
         })
-        .catch(error => console.error("Error fetching pending PPMPs:", error));
+        .catch(error => console.error("Error fetching PPMPs:", error));
     };
 
     // ==========================================
@@ -434,9 +437,36 @@ document.addEventListener("DOMContentLoaded", () => {
             footerEl.innerHTML = "";
         } else if (mode === 'review') {
             titleEl.innerText = `Reviewing Latest PPMP (ID: ${ppmpId})`;
-            titleEl.style.color = "#0d6efd";
+            titleEl.style.color = "#0d6efd"; 
             subtitleEl.innerText = "Carefully review the requested items below before making a decision.";
-            footerEl.innerHTML = "<i>(Approve/Reject buttons will go here next!)</i>"; 
+            
+            // 1. Generate the <option> tags dynamically from our database array
+            let optionsHtml = window.ppmpStatuses.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+            
+            // 2. Build the new Control Panel UI
+            footerEl.innerHTML = `
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 6px; width: 100%; text-align: left; border: 1px solid #dee2e6;">
+                    <h4 style="margin-top: 0; margin-bottom: 15px; color: #333;">Admin Decision Panel</h4>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="font-weight: 600; font-size: 0.9em; color: #555;">Set New Document Status:</label>
+                        <select id="dynamicStatusSelect" style="width: 100%; padding: 10px; margin-top: 5px; border-radius: 4px; border: 1px solid #ccc; font-family: inherit; font-size: 1em;">
+                            ${optionsHtml}
+                        </select>
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="font-weight: 600; font-size: 0.9em; color: #555;">Admin Remarks (Notes for Sector):</label>
+                        <textarea id="dynamicRemarksInput" rows="2" placeholder="Type specific notes, or reasons for returning the document..." style="width: 100%; padding: 10px; margin-top: 5px; border-radius: 4px; border: 1px solid #ccc; font-family: inherit; resize: vertical; box-sizing: border-box;"></textarea>
+                    </div>
+                    
+                    <div style="text-align: right;">
+                        <button onclick="submitDynamicDecision(${ppmpId})" style="background: #0d6efd; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 1em; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            💾 Save Status Update
+                        </button>
+                    </div>
+                </div>
+            `; 
         }
 
         fetch(`http://127.0.0.1:8000/api/admin/ppmps/${ppmpId}`, {
@@ -489,7 +519,90 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
     // INITIALIZE APP 
     // ==========================================
+    // ==========================================
+    // 8. INITIALIZE APP & FETCH GLOBALS
+    // ==========================================
+    window.ppmpStatuses = []; // Global array to hold the dynamic statuses
+
+    window.fetchDynamicStatuses = function() {
+        const token = localStorage.getItem('auth_token');
+        fetch('http://127.0.0.1:8000/api/admin/ppmp-statuses', {
+            headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.status === 'success') {
+                window.ppmpStatuses = data.data; // Save them for later!
+            }
+        })
+        .catch(error => console.error("Failed to load statuses:", error));
+    };
+
     if (isLoggedInAdmin) {
+        fetchDynamicStatuses(); // Grab statuses from the DB immediately
         loadDashboard();
+    }
+
+    // ==========================================
+    // THE DECISION ENGINE (Approve / Reject)
+    // ==========================================
+
+    // ==========================================
+    // THE DYNAMIC DECISION ENGINE 
+    // ==========================================
+
+    window.submitDynamicDecision = function(id) {
+        const statusId = document.getElementById('dynamicStatusSelect').value;
+        const remarks = document.getElementById('dynamicRemarksInput').value;
+
+        // Look up the name of the status they just selected
+        const selectedStatus = window.ppmpStatuses.find(s => s.id == statusId);
+        const statusName = selectedStatus ? selectedStatus.name : "Unknown Status";
+
+        // Smart UX: If they choose a status with "Return" or "Reject" in the name, force them to type a reason!
+        if (statusName.toLowerCase().includes('return') || statusName.toLowerCase().includes('reject')) {
+            if (remarks.trim() === '') {
+                alert(`You must provide remarks when setting the status to '${statusName}' so the Sector knows what to fix.`);
+                return;
+            }
+        }
+
+        // Final confirmation
+        if(!confirm(`Are you sure you want to change this PPMP's status to: ${statusName}?`)) {
+            return;
+        }
+
+        processDecision(id, statusId, remarks); 
+    };
+
+    function processDecision(id, statusId, remarks) {
+        const token = localStorage.getItem('auth_token');
+        
+        fetch(`http://127.0.0.1:8000/api/admin/ppmps/${id}/status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ 
+                status_id: statusId, 
+                admin_remarks: remarks 
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.status === 'success') {
+                alert("Decision recorded successfully!");
+                document.getElementById("reviewModal").style.display = "none"; // Close modal
+                loadAdminPpmps(); // Refresh the table so the approved item vanishes!
+            } else {
+                alert("Error: " + data.message);
+            }
+        })
+        .catch(error => {
+            console.error("Submission Error:", error);
+            alert("Failed to connect to the server.");
+        });
     }
 });
