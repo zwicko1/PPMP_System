@@ -32,9 +32,34 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
     // ADMIN LOGIN LOGIC
     // ==========================================
+    // ==========================================
+    // ADMIN LOGIN LOGIC
+    // ==========================================
     const loginBtn = document.getElementById('adminLoginBtn');
+
+    // ==========================================
+    // ALLOW "ENTER" KEY FOR ADMIN LOGIN (Moved OUTSIDE!)
+    // ==========================================
+    const adminPasswordInput = document.getElementById('adminPasswordInput');
+    const adminEmailInput = document.getElementById('adminEmailInput');
+
+    function triggerAdminLogin(event) {
+        if (event.key === "Enter" || event.keyCode === 13) {
+            event.preventDefault(); 
+            if (loginBtn) loginBtn.click(); 
+        }
+    }
+
+    if (adminPasswordInput) adminPasswordInput.addEventListener("keydown", triggerAdminLogin);
+    if (adminEmailInput) adminEmailInput.addEventListener("keydown", triggerAdminLogin);
+
+    // ==========================================
+    // MAIN ADMIN LOGIN BUTTON CLICK
+    // ==========================================
     if (loginBtn) {
-        loginBtn.addEventListener('click', function() {
+        loginBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+
             const email = document.getElementById('adminEmailInput').value;
             const password = document.getElementById('adminPasswordInput').value;
             const msg = document.getElementById('adminLoginMessage');

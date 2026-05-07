@@ -1,46 +1,74 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-  document.getElementById('loginBtn').addEventListener('click', function() {
-      const email = document.getElementById('emailInput').value;
-      const password = document.getElementById('passwordInput').value;
-      const messageDisplay = document.getElementById('loginMessage');
+    // ==========================================
+    // ALLOW "ENTER" KEY FOR USER LOGIN
+    // ==========================================
+    const passwordInput = document.getElementById('passwordInput');
+    const emailInput = document.getElementById('emailInput');
 
-      messageDisplay.style.color = "blue";
-      messageDisplay.innerText = "Authenticating...";
+    function triggerUserLogin(event) {
+        if (event.key === "Enter" || event.keyCode === 13) {
+            event.preventDefault(); 
+            document.getElementById('loginBtn').click(); 
+        }
+    }
 
-      fetch('http://127.0.0.1:8000/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ email: email, password: password })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.token) {
-                if (data.user.role_id === 1) {
-                    messageDisplay.style.color = "orange";
-                    messageDisplay.innerText = "Redirecting to Admin Portal...";
-                    window.location.href = "admin.html";
-                    return;
-                }
-
-                localStorage.setItem('auth_token', data.token);
-                localStorage.setItem('user_data', JSON.stringify(data.user));
-                
-                document.getElementById('loginSection').style.display = 'none';
-                document.getElementById('mainPpmpApp').style.display = 'block';
-                document.getElementById('welcomeUser').innerText = "Welcome, " + data.user.unit_name;
-                loadUserData(); 
-                fetchCurrentPpmp();
-            } else {
-                messageDisplay.style.color = "red";
-                messageDisplay.innerText = data.message || "Login failed.";
-            }
-        })
-        .catch(error => { console.error("Login error:", error); });
-  });
+    if (passwordInput) passwordInput.addEventListener("keydown", triggerUserLogin);
+    if (emailInput) emailInput.addEventListener("keydown", triggerUserLogin);
 
     // ==========================================
-    // NEW: FETCH DYNAMIC PPMP TYPES
+    // MAIN LOGIN BUTTON CLICK LOGIC
+    // ==========================================
+    const loginBtn = document.getElementById('loginBtn');
+    if (loginBtn) {
+        loginBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            const email = document.getElementById('emailInput').value;
+            const password = document.getElementById('passwordInput').value;
+            const messageDisplay = document.getElementById('loginMessage');
+
+            messageDisplay.style.color = "blue";
+            messageDisplay.innerText = "Authenticating...";
+
+            fetch('http://127.0.0.1:8000/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ email: email, password: password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.token) {
+                    if (data.user.role_id === 1) {
+                        messageDisplay.style.color = "orange";
+                        messageDisplay.innerText = "Redirecting to Admin Portal...";
+                        window.location.href = "admin.html";
+                        return;
+                    }
+
+                    localStorage.setItem('auth_token', data.token);
+                    localStorage.setItem('user_data', JSON.stringify(data.user));
+                    
+                    document.getElementById('loginSection').style.display = 'none';
+                    document.getElementById('mainPpmpApp').style.display = 'block';
+                    document.getElementById('welcomeUser').innerText = "Welcome, " + data.user.unit_name;
+                    loadUserData(); 
+                    fetchCurrentPpmp();
+                } else {
+                    messageDisplay.style.color = "red";
+                    messageDisplay.innerText = data.message || "Login failed.";
+                }
+            })
+            .catch(error => { 
+                console.error("Login error:", error); 
+                messageDisplay.style.color = "red";
+                messageDisplay.innerText = "Server connection failed. Check console.";
+            });
+        });
+    }
+
+    // ==========================================
+    // FETCH DYNAMIC PPMP TYPES
     // ==========================================
     const ppmpTypeDropdown = document.getElementById("ppmpType");
     
@@ -508,24 +536,3 @@ const submitBtn = document.getElementById("submitToDatabase");
       }
     }
 });
-
-const budgetInput = document.getElementById('budget');
-
-budgetInput.addEventListener('input', function(e) {
-    let value = e.target.value;
-
-    value = value.replace(/[^0-9.]/g, '');
-
-    if (value.includes('.')) {
-        const parts = value.split('.');
-        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        e.target.value = parts.join('.');
-    } else {
-        if (value !== '') {
-            e.target.value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        } else {
-            e.target.value = '';
-        }
-    }
-});
-
