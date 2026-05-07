@@ -1,20 +1,4 @@
 document.addEventListener("DOMContentLoaded", () => {
-  
-  if (localStorage.getItem('auth_token')) {
-      const userDataStr = localStorage.getItem('user_data');
-      if (userDataStr) {
-          const user = JSON.parse(userDataStr);
-          if (user.role_id === 1) {
-              localStorage.clear();
-              window.location.replace("admin.html"); 
-          } else {
-              document.getElementById('loginSection').style.display = 'none';
-              document.getElementById('mainPpmpApp').style.display = 'block';
-              document.getElementById('welcomeUser').innerText = "Welcome, " + (user.unit_name || "");
-              loadUserData();
-          }
-      }
-  }
 
   document.getElementById('loginBtn').addEventListener('click', function() {
       const email = document.getElementById('emailInput').value;
@@ -46,6 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById('mainPpmpApp').style.display = 'block';
                 document.getElementById('welcomeUser').innerText = "Welcome, " + data.user.unit_name;
                 loadUserData(); 
+                fetchCurrentPpmp();
             } else {
                 messageDisplay.style.color = "red";
                 messageDisplay.innerText = data.message || "Login failed.";
@@ -54,7 +39,37 @@ document.addEventListener("DOMContentLoaded", () => {
         .catch(error => { console.error("Login error:", error); });
   });
 
- 
+    // ==========================================
+    // NEW: FETCH DYNAMIC PPMP TYPES
+    // ==========================================
+    const ppmpTypeDropdown = document.getElementById("ppmpType");
+    
+    if (ppmpTypeDropdown) {
+        fetch('http://127.0.0.1:8000/api/ppmp/types', {
+            headers: { 'Accept': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(types => {
+            ppmpTypeDropdown.innerHTML = ''; // Clear the "Loading..." text
+            
+            types.forEach(type => {
+                const option = document.createElement("option");
+                option.value = type.id;
+                option.textContent = type.name;
+                
+                // Keep your "Indicative" default feature!
+                if (type.name === 'Indicative') {
+                    option.selected = true;
+                }
+                
+                ppmpTypeDropdown.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error("Failed to load PPMP types:", error);
+            ppmpTypeDropdown.innerHTML = '<option value="">Error loading types</option>';
+        });
+    }
  document.addEventListener('click', function(e) {
      const clickedLogout = e.target.closest('#logoutBtn');
     
@@ -79,12 +94,14 @@ document.addEventListener("DOMContentLoaded", () => {
       if (headDesignationInput) headDesignationInput.value = user.unit_designation || '';
   }
 
-  if (localStorage.getItem('auth_token')) {
-      loadUserData();
-  }
-
   const fiscalYear = document.getElementById("fiscalYear");
-  if(fiscalYear) fiscalYear.value = new Date().getFullYear() + 1; 
+  if(fiscalYear) {
+      fiscalYear.value = new Date().getFullYear() + 1; 
+
+      fiscalYear.addEventListener('change', () => {
+          fetchCurrentPpmp();
+      });
+  }
 
   const startDateInput = document.getElementById('startDate');
   const endDateInput = document.getElementById('endDate');
@@ -112,6 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const projects = [];
   let editIndex = null;
+  let isLocked = false;
 
   const tableBody = document.querySelector("#ppmpTable tbody");
   const totalBudgetEl = document.getElementById("totalBudget");
@@ -156,7 +174,7 @@ document.addEventListener("DOMContentLoaded", () => {
     projects.forEach((p, i) => {
       total += p.budget;
       const row = document.createElement("tr");
-      row.innerHTML = `
+      let rowHtml = `
           <td>${i + 1}</td>
           <td>${p.description}</td>
           <td>${p.type}</td>
@@ -169,11 +187,16 @@ document.addEventListener("DOMContentLoaded", () => {
           <td>${p.source}</td>
           <td>${p.budget.toLocaleString()}</td>
           <td>${p.docs}</td>
-          <td>${p.remarks}</td>
-          <td>
+          <td>${p.remarks}</td>`;
+
+      if (!isLocked) {
+          rowHtml += `<td>
             <button type="button" onclick="editProject(${i})">✏️</button>
             <button type="button" onclick="deleteProject(${i})">🗑️</button>
           </td>`;
+      }
+      
+      row.innerHTML = rowHtml;
       tableBody.appendChild(row);
     });
     if(totalBudgetEl) totalBudgetEl.textContent = total.toLocaleString();
@@ -250,59 +273,184 @@ document.addEventListener("DOMContentLoaded", () => {
       };
   }
 
-  const submitBtn = document.getElementById("submitToDatabase");
-  if(submitBtn) {
-      submitBtn.onclick = () => {
-          const token = localStorage.getItem('auth_token');
-          
-          if (!token) {
-              alert("Security Error: You must be logged in to submit.");
-              document.getElementById('mainPpmpApp').style.display = 'none';
-              document.getElementById('loginSection').style.display = 'flex';
-              return;
+    // ==========================================
+    // NEW: FETCH SECTOR PPMP & BUDGET ON LOGIN
+    // ==========================================
+    window.fetchCurrentPpmp = function() {
+        const token = localStorage.getItem('auth_token');
+        if(!token) return;
+
+        const yearInput = document.getElementById("fiscalYear");
+        const selectedYear = yearInput ? yearInput.value : (new Date().getFullYear() + 1);
+
+        fetch(`http://127.0.0.1:8000/api/ppmp/current?year=${selectedYear}`, {
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('uiAllocatedBudget').innerText = '₱' + (data.allocated_budget || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
+            
+            if(data.status === 'empty') {
+                document.getElementById('uiRemainingBudget').innerText = '₱' + (data.allocated_budget || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
+                document.getElementById('uiPpmpStatus').innerText = 'Not Submitted';
+                document.getElementById('uiPpmpStatus').style.color = '#dc3545'; 
+                
+                // UNLOCK MODE
+                isLocked = false; 
+                
+                const actionHeader = document.getElementById('actionHeader');
+                if(actionHeader) actionHeader.style.display = ''; 
+                
+                const typeDropdown = document.getElementById('ppmpType');
+                if(typeDropdown) {
+                    typeDropdown.disabled = false;
+                    typeDropdown.style.background = ""; // Reset background
+                }
+
+                projects.length = 0; 
+                renderTable();
+
+                const formSection = document.querySelector('.form-section');
+                if(formSection) formSection.style.display = 'block';
+
+                const submitBtn = document.getElementById("submitToDatabase");
+                if(submitBtn) {
+                    submitBtn.innerText = "🚀 Submit to Database";
+                    submitBtn.disabled = false;
+                    submitBtn.style.background = "";
+                }
+            } else if (data.status === 'success') {
+                //PPMP EXISTS! Update Status UI
+                document.getElementById('uiRemainingBudget').innerText = '₱' + (data.remaining_budget || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
+                document.getElementById('uiPpmpStatus').innerText = data.current_status;
+                document.getElementById('uiPpmpStatus').style.color = '#f39c12'; // Warning/Pending Color
+                isLocked = true; 
+                
+                const actionHeader = document.getElementById('actionHeader');
+                if(actionHeader) actionHeader.style.display = 'none'; 
+                
+                const typeDropdown = document.getElementById("ppmpType");
+                if (typeDropdown) {
+                    // 1. Set the value from the database
+                    typeDropdown.value = data.data.ppmp_type_id; 
+                    
+                    // 2. Lock it so they can't change it in View Mode
+                    typeDropdown.disabled = true;
+                    typeDropdown.style.background = "#e9ecef"; 
+                }
+                projects.length = 0; 
+                data.data.items.forEach(item => {
+                    projects.push({
+                        description: item.description,
+                        type: item.type,
+                        quantity: item.quantity,
+                        mode: item.mode_of_procurement,
+                        preProc: item.pre_proc_conference || item.pre_procurement_conference, 
+                        start: item.start_date.substring(0, 7), // Trims "2026-01-01" down to "2026-01" for the month input
+                        end: item.end_date.substring(0, 7),
+                        implementation: item.implementation_period,
+                        source: item.source_of_funds,
+                        budget: parseFloat(item.estimated_budget),
+                        docs: item.supporting_docs || '',
+                        remarks: item.remarks || ''
+                    });
+                });
+                renderTable();
+
+                // 4. Update the Header Dropdowns to match the saved data
+                const yearDropdown = document.getElementById("fiscalYear");
+                if(yearDropdown) yearDropdown.value = data.data.fiscal_year;
+
+                // 5. Lock the View (Prevent re-submission for now)
+                const submitBtn = document.getElementById("submitToDatabase");
+                if(submitBtn) {
+                    submitBtn.innerText = "🔒 PPMP Submitted";
+                    submitBtn.disabled = true;
+                    submitBtn.style.background = "#6c757d";
+                }
+                
+                // Hide the "Add Project" form so they just see their table
+                const formSection = document.querySelector('.form-section');
+                if(formSection) formSection.style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching PPMP:", error);
+            document.getElementById('uiPpmpStatus').innerText = "Connection Error";
+            document.getElementById('uiPpmpStatus').style.color = "red";
+        });
+    };
+const submitBtn = document.getElementById("submitToDatabase");
+    if(submitBtn) {
+        submitBtn.onclick = () => {
+            const token = localStorage.getItem('auth_token');
+            
+            if (!token) {
+                alert("Security Error: You must be logged in to submit.");
+                return;
+            }
+
+            if (projects.length === 0) {
+                return alert("Please add at least one project before submitting.");
+            }
+
+            const payload = {
+                fiscal_year: document.getElementById("fiscalYear").value,
+                ppmp_type_id: document.getElementById("ppmpType").value,
+                items: projects 
+            };
+
+            const btn = document.getElementById("submitToDatabase");
+            btn.innerText = "Submitting...";
+            btn.disabled = true;
+
+            fetch('http://127.0.0.1:8000/api/ppmp/submit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${token}` 
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json())
+            .then(data => {
+                btn.innerText = "🚀 Submit to Database";
+                btn.disabled = false;
+                
+                if(data.status === 'success') {
+                    alert("PPMP Successfully Submitted for Approval!");
+                    fetchCurrentPpmp();
+                } else {
+                    alert("Error saving: " + (data.message || "Please check your inputs."));
+                }
+            })
+            .catch(error => {
+                console.error("Submission Error:", error);
+                btn.innerText = "🚀 Submit to Database";
+                btn.disabled = false;
+                alert("Failed to connect to the server.");
+            });
+        };
+    }
+
+    if (localStorage.getItem('auth_token')) {
+      const userDataStr = localStorage.getItem('user_data');
+      if (userDataStr) {
+          const user = JSON.parse(userDataStr);
+          if (user.role_id === 1) {
+              localStorage.clear();
+              window.location.replace("admin.html"); 
+          } else {
+              document.getElementById('loginSection').style.display = 'none';
+              document.getElementById('mainPpmpApp').style.display = 'block';
+              document.getElementById('welcomeUser').innerText = "Welcome, " + (user.unit_name || "");
+              loadUserData();
+              fetchCurrentPpmp();
           }
-
-          if (projects.length === 0) {
-              return alert("Please add at least one project before submitting.");
-          }
-
-          const payload = {
-              fiscal_year: document.getElementById("fiscalYear").value,
-              is_indicative: document.getElementById("indicative").checked,
-              is_final: document.getElementById("final").checked,
-              items: projects 
-          };
-
-          const btn = document.getElementById("submitToDatabase");
-          btn.innerText = "Submitting...";
-          btn.disabled = true;
-
-          fetch('http://127.0.0.1:8000/api/ppmp/submit', {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json',
-                  'Accept': 'application/json',
-                  'Authorization': `Bearer ${token}` 
-              },
-              body: JSON.stringify(payload)
-          })
-          .then(response => response.json())
-          .then(data => {
-              btn.innerText = "🚀 Submit to Database";
-              btn.disabled = false;
-              
-              if(data.status === 'success') {
-                  alert("PPMP Successfully Saved to the Database!");
-              } else {
-                  alert("Error saving: " + (data.message || "Unknown error"));
-              }
-          })
-          .catch(error => {
-              console.error("Submission Error:", error);
-              btn.innerText = "🚀 Submit to Database";
-              btn.disabled = false;
-              alert("Failed to connect to the server.");
-          });
-      };
-  }
+      }
+    }
 });

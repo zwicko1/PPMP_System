@@ -77,11 +77,31 @@
                 <input type="text" id="headDesignation" readonly style="background: #e9ecef; cursor: not-allowed;" />
               </label>
               
-              <label><input type="checkbox" id="indicative" /> Indicative</label>
-              <label><input type="checkbox" id="final" /> Final</label>
+              <label id="ppmpTypeContainer">PPMP Type:
+                <select id="ppmpType" style="padding: 5px; border-radius: 4px; border: 1px solid #ccc;">
+                  <option value="" disabled selected>Loading options...</option>
+                </select>
+              </label>
             </div>
           </div>
         </header>
+
+          <!-- ================= SECTOR BUDGET DASHBOARD ================= -->
+                <div id="dashboardStatusPanel" style="background: #f8f9fa; padding: 20px; margin: 20px; border-radius: 8px; border-left: 5px solid #0d6efd; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <div>
+                        <span style="font-size: 0.9em; color: #6c757d; font-weight: 600; text-transform: uppercase;">Allocated Budget</span>
+                        <h3 id="uiAllocatedBudget" style="margin: 5px 0 0 0; color: #0d6efd; font-size: 1.5rem;">₱0.00</h3>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.9em; color: #6c757d; font-weight: 600; text-transform: uppercase;">Remaining Balance</span>
+                        <h3 id="uiRemainingBudget" style="margin: 5px 0 0 0; color: #198754; font-size: 1.5rem;">₱0.00</h3>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 0.9em; color: #6c757d; font-weight: 600; text-transform: uppercase;">PPMP Status</span>
+                        <h3 id="uiPpmpStatus" style="margin: 5px 0 0 0; color: #dc3545; font-size: 1.5rem;">Not Submitted</h3>
+                    </div>
+                </div>
+          <!-- =========================================================== -->
 
         <section class="form-section">
           <h3>Add Procurement Project</h3>
@@ -161,7 +181,7 @@
                 <tr>
                   <th>#</th><th>Description</th><th>Type</th><th>Quantity</th><th>Mode</th>
                   <th>Pre-Proc</th><th>Start</th><th>End</th><th>Implementation</th>
-                  <th>Source</th><th>Budget (₱)</th><th>Docs</th><th>Remarks</th><th>Action</th>
+                  <th>Source</th><th>Budget (₱)</th><th>Docs</th><th>Remarks</th><th id="actionHeader">Action</th>
                 </tr>
               </thead>
               <tbody></tbody>
