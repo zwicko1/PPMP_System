@@ -130,6 +130,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const projects = [];
   let editIndex = null;
   let isLocked = false;
+  let currentPpmpId = null;
 
   const tableBody = document.querySelector("#ppmpTable tbody");
   const totalBudgetEl = document.getElementById("totalBudget");
@@ -310,6 +311,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     typeDropdown.style.background = ""; // Reset background
                 }
 
+                currentPpmpId = null;
+                const reviseBtn = document.getElementById('reviseBtn');
+                if(reviseBtn) reviseBtn.style.display = 'none';
+
                 projects.length = 0; 
                 renderTable();
 
@@ -327,6 +332,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById('uiRemainingBudget').innerText = '₱' + (data.remaining_budget || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
                 document.getElementById('uiPpmpStatus').innerText = data.current_status;
                 document.getElementById('uiPpmpStatus').style.color = '#f39c12'; // Warning/Pending Color
+                
                 isLocked = true; 
                 
                 const actionHeader = document.getElementById('actionHeader');
@@ -358,6 +364,12 @@ document.addEventListener("DOMContentLoaded", () => {
                         remarks: item.remarks || ''
                     });
                 });
+
+                currentPpmpId = data.data.id;
+                
+                const reviseBtn = document.getElementById('reviseBtn');
+                if(reviseBtn) reviseBtn.style.display = 'inline-block';
+
                 renderTable();
 
                 // 4. Update the Header Dropdowns to match the saved data
@@ -383,6 +395,47 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById('uiPpmpStatus').style.color = "red";
         });
     };
+
+    // ==========================================
+    // NEW: UNLOCK DASHBOARD FOR REVISIONS
+    // ==========================================
+    const reviseBtn = document.getElementById('reviseBtn');
+    if (reviseBtn) {
+        reviseBtn.addEventListener('click', () => {
+            // 1. Flip the master switch
+            isLocked = false;
+
+            // 2. Un-hide the Action Column
+            const actionHeader = document.getElementById('actionHeader');
+            if(actionHeader) actionHeader.style.display = ''; 
+
+            // 3. Unlock the Dropdown
+            const typeDropdown = document.getElementById('ppmpType');
+            if(typeDropdown) {
+                typeDropdown.disabled = false;
+                typeDropdown.style.background = ""; 
+            }
+
+            // 4. Reveal the Add Project Form
+            const formSection = document.querySelector('.form-section');
+            if(formSection) formSection.style.display = 'block';
+
+            // 5. Change the Submit Button to reflect it's a revision
+            const submitBtn = document.getElementById("submitToDatabase");
+            if(submitBtn) {
+                submitBtn.innerText = "🚀 Submit Revision (v2)";
+                submitBtn.disabled = false;
+                submitBtn.style.background = "";
+            }
+
+            // 6. Hide the Revise button itself
+            reviseBtn.style.display = 'none';
+
+            // 7. Redraw the table so the Edit/Delete buttons appear!
+            renderTable();
+        });
+    }
+
 const submitBtn = document.getElementById("submitToDatabase");
     if(submitBtn) {
         submitBtn.onclick = () => {
@@ -400,6 +453,7 @@ const submitBtn = document.getElementById("submitToDatabase");
             const payload = {
                 fiscal_year: document.getElementById("fiscalYear").value,
                 ppmp_type_id: document.getElementById("ppmpType").value,
+                parent_id: currentPpmpId,
                 items: projects 
             };
 

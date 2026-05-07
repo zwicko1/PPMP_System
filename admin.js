@@ -4,14 +4,13 @@ document.addEventListener("DOMContentLoaded", () => {
     let isLoggedInAdmin = false;
 
     // ==========================================
-    // 1. ADMIN ROUTE GUARD (Security & Display Only)
+    // ADMIN ROUTE GUARD (Security & Display Only)
     // ==========================================
     if (localStorage.getItem('auth_token')) {
         const userDataStr = localStorage.getItem('user_data');
         if (userDataStr) {
             const user = JSON.parse(userDataStr);
             if (user.role_id === 1) {
-                // They are an admin! Hide login, show dashboard.
                 const loginSec = document.getElementById('adminLoginSection');
                 const dashApp = document.getElementById('adminDashboardApp');
                 
@@ -21,10 +20,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 const adminNameDisplay = document.getElementById('adminWelcomeText');
                 if(adminNameDisplay) adminNameDisplay.innerText = "Logged in as: " + (user.unit_name || "Admin");
                 
-                // Set the flag to true so we can load the data later
                 isLoggedInAdmin = true; 
             } else {
-                // They are a Sector trying to sneak in
                 localStorage.clear();
                 alert("Access Denied: You must be an Administrator.");
                 window.location.replace("index.html");
@@ -33,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ==========================================
-    // 2. ADMIN LOGIN LOGIC
+    // ADMIN LOGIN LOGIC
     // ==========================================
     const loginBtn = document.getElementById('adminLoginBtn');
     if (loginBtn) {
@@ -75,7 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ==========================================
-    // 3. BULLETPROOF ADMIN LOGOUT LOGIC
+    // BULLETPROOF ADMIN LOGOUT LOGIC
     // ==========================================
     document.addEventListener('click', function(e) {
         const clickedLogout = e.target.closest('#adminLogoutBtn');
@@ -89,7 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // ==========================================
-    // 4. TAB NAVIGATION LOGIC
+    // TAB NAVIGATION LOGIC
     // ==========================================
     const tabBudget = document.getElementById("tabBudget");
     const tabPpmp = document.getElementById("tabPpmp");
@@ -106,7 +103,7 @@ document.addEventListener("DOMContentLoaded", () => {
             tabPpmp.style.background = "transparent";
             tabPpmp.style.border = "1px solid #7f8c8d";
             
-            loadDashboard(); // Refresh budget data
+            loadDashboard(); 
         });
 
         tabPpmp.addEventListener("click", () => {
@@ -118,12 +115,12 @@ document.addEventListener("DOMContentLoaded", () => {
             tabBudget.style.background = "transparent";
             tabBudget.style.border = "1px solid #7f8c8d";
             
-            loadAdminPpmps(); // Fetch PPMP data
+            loadAdminPpmps(); // Fetch PPMP data when tab is clicked
         });
     }
 
     // ==========================================
-    // 5. BUDGET DASHBOARD LOGIC
+    // BUDGET DASHBOARD LOGIC
     // ==========================================
     const yearFilter = document.getElementById("yearFilter");
     if(yearFilter) {
@@ -133,7 +130,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function loadDashboard() {
         const token = localStorage.getItem('auth_token');
-        // Safely grab the year, fallback to next year if not found
         const yearInput = document.getElementById("yearFilter");
         const year = yearInput ? yearInput.value : (new Date().getFullYear() + 1);
         const tbody = document.getElementById("tableBody");
@@ -197,7 +193,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ==========================================
-    // 6. BUDGET MODAL LOGIC
+    // BUDGET MODAL LOGIC
     // ==========================================
     let currentSectorId = null;
     const modal = document.getElementById("budgetModal");
@@ -270,100 +266,230 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ==========================================
-    // 7. PPMP APPROVAL LOGIC
+    // PENDING PPMP APPROVALS (Grouped & Nested!)
     // ==========================================
-    function loadAdminPpmps() {
+    window.loadAdminPpmps = function() {
         const token = localStorage.getItem('auth_token');
-        const tbody = document.querySelector("#adminPpmpTable tbody");
-        if(!tbody) return; 
-        
-        tbody.innerHTML = "<tr><td colspan='6' style='text-align: center; padding: 20px;'>Loading PPMPs...</td></tr>";
+        if (!token) return;
 
-        fetch('http://127.0.0.1:8000/api/admin/ppmps', {
-            headers: { 
+        const tbody = document.getElementById('adminPendingTableBody') || document.querySelector("#adminPpmpTable tbody");
+        if(!tbody) return;
+
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: #6c757d;">Loading pending submissions...</td></tr>';
+
+        fetch('http://127.0.0.1:8000/api/admin/ppmps/pending', {
+            headers: {
                 'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json' 
+                'Accept': 'application/json'
             }
         })
         .then(response => response.json())
         .then(data => {
-            if(data.status === 'success') {
-                renderAdminPpmpTable(data.data);
-            } else {
-                tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; color:red;'>Error loading PPMPs</td></tr>";
+            tbody.innerHTML = ''; 
+
+            if (!data.data || data.data.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align:center; padding: 40px; color: #198754; font-weight: bold; font-size: 1.1rem;">
+                            🎉 All caught up! No pending PPMPs to review.
+                        </td>
+                    </tr>`;
+                return;
             }
-        })
-        .catch(error => console.error("PPMP Load Error:", error));
-    }
 
-    function renderAdminPpmpTable(ppmps) {
-        const tbody = document.querySelector("#adminPpmpTable tbody");
-        tbody.innerHTML = "";
+            // ==========================================
+            // ALGORITHM: Group data by Sector AND Year
+            // ==========================================
+            const groupedPpmps = {};
+            data.data.forEach(ppmp => {
+                // Creates a unique key like "3_2027"
+                const key = `${ppmp.user_id}_${ppmp.fiscal_year}`;
+                if(!groupedPpmps[key]) groupedPpmps[key] = [];
+                groupedPpmps[key].push(ppmp);
+            });
 
-        if (ppmps.length === 0) {
-            tbody.innerHTML = "<tr><td colspan='6' style='text-align: center; padding: 20px; color: #666;'>No PPMPs have been submitted yet.</td></tr>";
-            return;
-        }
+            // ==========================================
+            // RENDER: Loop through each group
+            // ==========================================
+            Object.values(groupedPpmps).forEach(group => {
+                group.sort((a, b) => b.version - a.version);
 
-        ppmps.forEach(ppmp => {
-            const totalBudget = ppmp.items.reduce((sum, item) => sum + parseFloat(item.estimated_budget), 0);
-            
-            let actionButtons = '';
-            if (ppmp.status === 'Pending') {
-                actionButtons = `
-                    <button onclick="updatePpmpStatus(${ppmp.id}, 'Approved')" style="background: #198754; color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px; margin-right: 5px;">✅ Approve</button>
-                    <button onclick="updatePpmpStatus(${ppmp.id}, 'Rejected')" style="background: #dc3545; color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px;">❌ Reject</button>
+                const latest = group[0];
+                const olderRevisions = group.slice(1);
+                
+                const sectorName = latest.user ? latest.user.unit_name : 'Unknown Sector';
+                const latestDateObj = new Date(latest.created_at);
+                const latestNiceDate = latestDateObj.toLocaleDateString() + ' ' + latestDateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+                let expandBtn = '';
+                if (olderRevisions.length > 0) {
+                    expandBtn = `<br><button onclick="toggleRevisions('rev-${latest.id}')" style="background: none; border: none; color: #0d6efd; font-size: 0.8em; text-decoration: underline; cursor: pointer; padding: 0; margin-top: 5px;">[+] View ${olderRevisions.length} Older Revision(s)</button>`;
+                }
+
+                const mainRow = document.createElement('tr');
+                mainRow.style.borderBottom = olderRevisions.length > 0 ? "none" : "1px solid #eee";
+                mainRow.style.background = "#fff";
+                
+                mainRow.innerHTML = `
+                    <td style="padding: 15px;">
+                        <strong>${sectorName}</strong>
+                        ${expandBtn}
+                    </td>
+                    <td style="padding: 15px; font-weight: 600;">${latest.fiscal_year}</td>
+                    <td style="padding: 15px;">
+                        <span style="background: #ffc107; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: bold; color: #000;">
+                            v${latest.version} (Latest)
+                        </span>
+                    </td>
+                    <td style="padding: 15px; color: #333;">${latestNiceDate}</td>
+                    <td style="padding: 15px; text-align: center;">
+                        <button onclick="reviewPpmp(${latest.id})" style="background-color: #0d6efd; color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            🔍 Review
+                        </button>
+                    </td>
                 `;
-            } else if (ppmp.status === 'Approved') {
-                actionButtons = `<span style="color: #198754; font-weight: bold;">✓ Approved</span>`;
-            } else {
-                actionButtons = `<span style="color: #dc3545; font-weight: bold;">✗ Rejected</span>`;
-            }
+                tbody.appendChild(mainRow);
 
-            const row = document.createElement("tr");
-            row.innerHTML = `
-                <td style="padding: 12px; border-bottom: 1px solid #eee;">${ppmp.id}</td>
-                <td style="padding: 12px; border-bottom: 1px solid #eee;">${ppmp.fiscal_year}</td>
-                <td style="padding: 12px; border-bottom: 1px solid #eee;"><strong>${ppmp.user ? ppmp.user.unit_name : 'Unknown Sector'}</strong></td>
-                <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right; color: #198754; font-weight: 600;">₱${totalBudget.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;"><strong>${ppmp.status}</strong></td>
-                <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">${actionButtons}</td>
-            `;
-            tbody.appendChild(row);
-        });
-    }
+                olderRevisions.forEach((old, index) => {
+                    const oldRow = document.createElement('tr');
+                    oldRow.className = `rev-${latest.id}`;
+                    oldRow.style.display = 'none';
+                    oldRow.style.background = '#f8f9fa';
+                    
+                    oldRow.style.borderBottom = index === olderRevisions.length - 1 ? "1px solid #eee" : "none";
 
-    window.updatePpmpStatus = function(id, newStatus) {
-        if (!confirm(`Are you sure you want to mark PPMP #${id} as ${newStatus}?`)) return;
+                    const oldDateObj = new Date(old.created_at);
+                    const oldNiceDate = oldDateObj.toLocaleDateString() + ' ' + oldDateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
-        const token = localStorage.getItem('auth_token');
-        
-        fetch(`http://127.0.0.1:8000/api/admin/ppmps/${id}/status`, {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'Authorization': `Bearer ${token}` 
-            },
-            body: JSON.stringify({ status: newStatus })
+                    oldRow.innerHTML = `
+                        <td style="padding: 10px 15px 10px 40px; color: #6c757d; font-size: 0.9em;">↳ Older Revision</td>
+                        <td style="padding: 10px 15px; color: #6c757d; font-size: 0.9em;">${old.fiscal_year}</td>
+                        <td style="padding: 10px 15px;">
+                            <span style="background: #e9ecef; padding: 3px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold; color: #6c757d;">
+                                v${old.version}
+                            </span>
+                        </td>
+                        <td style="padding: 10px 15px; color: #6c757d; font-size: 0.9em;">${oldNiceDate}</td>
+                        <td style="padding: 10px 15px; text-align: center;">
+                            <button onclick="viewOldPpmp(${old.id})" style="background-color: #6c757d; color: white; border: none; padding: 4px 10px; cursor: pointer; border-radius: 4px; font-size: 0.85em; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+                                👁️ View Only
+                            </button>
+                            <div style="color: #adb5bd; font-size: 0.75em; font-style: italic; margin-top: 4px;">Superseded by v${latest.version}</div>
+                        </td>
+                    `;
+                    tbody.appendChild(oldRow);
+                });
+            });
         })
-        .then(response => response.json())
-        .then(data => {
-            if(data.status === 'success') {
-                alert(`PPMP #${id} successfully marked as ${newStatus}!`);
-                loadAdminPpmps(); 
-            } else {
-                alert(data.message || "An error occurred while updating.");
-            }
+        .catch(error => console.error("Error fetching pending PPMPs:", error));
+    };
+
+    // ==========================================
+    // THE TOGGLE LOGIC FOR NESTED ROWS
+    // ==========================================
+    window.toggleRevisions = function(className) {
+        const rows = document.querySelectorAll('.' + className);
+        rows.forEach(row => {
+            row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
         });
     };
 
     // ==========================================
-    // 8. INITIALIZE APP (Safely at the end!)
+    // MASTER REVIEW MODAL LOGIC
     // ==========================================
-    // We only call this AFTER all functions and variables above are fully loaded
+    const reviewModal = document.getElementById("reviewModal");
+    const closeReviewBtn = document.getElementById("closeReviewModalBtn");
+
+    if (closeReviewBtn) {
+        closeReviewBtn.addEventListener("click", () => {
+            reviewModal.style.display = "none";
+        });
+    }
+
+    window.reviewPpmp = function(ppmpId) {
+        openReviewModal(ppmpId, 'review');
+    };
+
+    window.viewOldPpmp = function(ppmpId) {
+        openReviewModal(ppmpId, 'readonly');
+    };
+
+    function openReviewModal(ppmpId, mode) {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+
+        reviewModal.style.display = "flex";
+
+        const titleEl = document.getElementById("modalReviewTitle");
+        const subtitleEl = document.getElementById("modalReviewSubtitle");
+        const footerEl = document.getElementById("reviewModalFooter");
+        const tbody = document.getElementById("reviewModalTableBody");
+
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #6c757d;">Fetching project details...</td></tr>';
+        
+        if (mode === 'readonly') {
+            titleEl.innerText = `Viewing Old Revision (ID: ${ppmpId})`;
+            titleEl.style.color = "#6c757d";
+            subtitleEl.innerText = "This is a superseded version. It is locked for auditing purposes.";
+            footerEl.innerHTML = "";
+        } else if (mode === 'review') {
+            titleEl.innerText = `Reviewing Latest PPMP (ID: ${ppmpId})`;
+            titleEl.style.color = "#0d6efd";
+            subtitleEl.innerText = "Carefully review the requested items below before making a decision.";
+            footerEl.innerHTML = "<i>(Approve/Reject buttons will go here next!)</i>"; 
+        }
+
+        fetch(`http://127.0.0.1:8000/api/admin/ppmps/${ppmpId}`, {
+            headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.status === 'success' && data.data.items) {
+                tbody.innerHTML = ""; 
+                let total = 0;
+
+                data.data.items.forEach(item => {
+                    const cost = parseFloat(item.estimated_budget);
+                    total += cost;
+                    
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td style="padding: 12px; border: 1px solid #dee2e6;"><strong>${item.description}</strong></td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">${item.type}</td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6; text-align: center;">${item.quantity}</td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">${item.mode_of_procurement}</td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6; font-size: 0.9em;">${item.start_date.substring(0,7)} to ${item.end_date.substring(0,7)}</td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6; color: #198754; font-weight: bold; text-align: right;">
+                            ₱${cost.toLocaleString(undefined, {minimumFractionDigits: 2})}
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                const totalRow = document.createElement("tr");
+                totalRow.style.backgroundColor = "#fff9f9";
+                totalRow.innerHTML = `
+                    <td colspan="5" style="padding: 12px; border: 1px solid #dee2e6; text-align: right; font-weight: bold;">Grand Total Requested:</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6; color: #c14f3b; font-weight: 900; text-align: right; font-size: 1.1em;">
+                        ₱${total.toLocaleString(undefined, {minimumFractionDigits: 2})}
+                    </td>
+                `;
+                tbody.appendChild(totalRow);
+
+            } else {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: red; padding: 30px;">Failed to load items.</td></tr>';
+            }
+        })
+        .catch(error => {
+            console.error(error);
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: red; padding: 30px;">Connection error.</td></tr>';
+        });
+    }
+
+    // ==========================================
+    // INITIALIZE APP 
+    // ==========================================
     if (isLoggedInAdmin) {
         loadDashboard();
     }
-
 });
