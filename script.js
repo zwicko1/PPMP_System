@@ -508,3 +508,24 @@ const submitBtn = document.getElementById("submitToDatabase");
       }
     }
 });
+
+const budgetInput = document.getElementById('budget');
+
+budgetInput.addEventListener('input', function(e) {
+    let value = e.target.value;
+
+    value = value.replace(/[^0-9.]/g, '');
+
+    if (value.includes('.')) {
+        const parts = value.split('.');
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        e.target.value = parts.join('.');
+    } else {
+        if (value !== '') {
+            e.target.value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        } else {
+            e.target.value = '';
+        }
+    }
+});
+
