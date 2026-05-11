@@ -39,6 +39,11 @@ document.addEventListener("DOMContentLoaded", () => {
             .then(response => response.json())
             .then(data => {
                 if (data.token) {
+                    localStorage.setItem('auth_token', data.token);
+                    localStorage.setItem('user_data', JSON.stringify(data.user));
+
+                    resetIdleTimer();
+
                     if (data.user.role_id === 1) {
                         messageDisplay.style.color = "orange";
                         messageDisplay.innerText = "Redirecting to Admin Portal...";
@@ -46,9 +51,6 @@ document.addEventListener("DOMContentLoaded", () => {
                         return;
                     }
 
-                    localStorage.setItem('auth_token', data.token);
-                    localStorage.setItem('user_data', JSON.stringify(data.user));
-                    
                     document.getElementById('loginSection').style.display = 'none';
                     document.getElementById('mainPpmpApp').style.display = 'block';
                     document.getElementById('welcomeUser').innerText = "Welcome, " + data.user.unit_name;
@@ -86,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 option.textContent = type.name;
                 
                 // Keep your "Indicative" default feature!
-                if (type.name === 'Indicative') {
+                if (type.id === '1') {
                     option.selected = true;
                 }
                 
@@ -98,14 +100,72 @@ document.addEventListener("DOMContentLoaded", () => {
             ppmpTypeDropdown.innerHTML = '<option value="">Error loading types</option>';
         });
     }
- document.addEventListener('click', function(e) {
-     const clickedLogout = e.target.closest('#logoutBtn');
+    // ==========================================
+    // SECURE LOGOUT & IDLE TIMER
+    // ==========================================
+    let idleTimer;
     
-     if (clickedLogout) {
-         localStorage.clear();
-         window.location.replace('index.html');
-     }
- });
+    // 🛑 CHANGE THIS: Set to 5000 (5 seconds) for testing right now! 
+    // When you confirm it works, change it back to: 5 * 60 * 1000
+    const IDLE_TIMEOUT_MS = 5000; 
+
+    // 1. The Master Logout Function
+    function performSecureLogout(isTimeout = false) {
+        const token = localStorage.getItem('auth_token');
+        
+        if (token) {
+            document.body.style.cursor = 'wait'; 
+            
+            fetch('http://127.0.0.1:8000/api/logout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
+            }).finally(() => {
+                document.body.style.cursor = 'default';
+                localStorage.clear();
+                
+                if (isTimeout) {
+                    alert("Security Timeout: You have been logged out due to inactivity.");
+                }
+                window.location.replace('index.html'); 
+            });
+        } else {
+            localStorage.clear();
+            if (window.location.pathname.includes('index.html')) {
+                window.location.reload(); // Just refresh if they are already on the login page
+            }
+        }
+    }
+
+    // 2. The Clock Reset Function
+    function resetIdleTimer() {
+        clearTimeout(idleTimer);
+        // Only start the countdown if they are actively logged in
+        if (localStorage.getItem('auth_token')) {
+            // When the clock hits zero, trigger the master logout!
+            idleTimer = setTimeout(() => performSecureLogout(true), IDLE_TIMEOUT_MS);
+        }
+    }
+
+    // 3. Listen for Human Activity 
+    ['mousedown', 'keydown', 'scroll', 'touchstart'].forEach(evt => {
+        document.addEventListener(evt, resetIdleTimer);
+    });
+
+    // 4. Attach to the Manual Logout Button
+    document.addEventListener('click', function(e) {
+        const clickedLogout = e.target.closest('#logoutBtn');
+        if (clickedLogout) {
+            e.preventDefault();
+            performSecureLogout(false); // False = User clicked it manually
+        }
+    });
+
+    // 5. Start the clock immediately when the page loads
+    resetIdleTimer();
+
   const sectorInput = document.getElementById("sectorInput");
   const headUnitInput = document.getElementById("headUnit"); 
   const headDesignationInput = document.getElementById("headDesignation");
@@ -303,7 +363,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
     // ==========================================
-    // NEW: FETCH SECTOR PPMP & BUDGET ON LOGIN
+    // FETCH SECTOR PPMP & BUDGET ON LOGIN
     // ==========================================
     window.fetchCurrentPpmp = function() {
         const token = localStorage.getItem('auth_token');
@@ -318,17 +378,32 @@ document.addEventListener("DOMContentLoaded", () => {
                 'Accept': 'application/json'
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            // THE MAGIC CHECK: If the server says "401 Unauthorized", the token is dead!
+            if (response.status === 401) {
+                localStorage.clear();
+                alert("Session Expired: Your account was logged into from another device.");
+                window.location.replace("index.html");
+                throw new Error("Token Invalidated");
+            }
+            return response.json();
+        })
         .then(data => {
             document.getElementById('uiAllocatedBudget').innerText = '₱' + (data.allocated_budget || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
-            
+
+            const feedbackAlert = document.getElementById('adminFeedbackAlert');
+            const feedbackText = document.getElementById('adminFeedbackText');
+
             if(data.status === 'empty') {
                 document.getElementById('uiRemainingBudget').innerText = '₱' + (data.allocated_budget || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
                 document.getElementById('uiPpmpStatus').innerText = 'Not Submitted';
                 document.getElementById('uiPpmpStatus').style.color = '#dc3545'; 
                 
-                // UNLOCK MODE
+                if (feedbackAlert) feedbackAlert.style.display = 'none';
+
                 isLocked = false; 
+                currentPpmpId = null;
+                projects.length = 0; 
                 
                 const actionHeader = document.getElementById('actionHeader');
                 if(actionHeader) actionHeader.style.display = ''; 
@@ -336,16 +411,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 const typeDropdown = document.getElementById('ppmpType');
                 if(typeDropdown) {
                     typeDropdown.disabled = false;
-                    typeDropdown.style.background = ""; // Reset background
+                    typeDropdown.style.background = ""; 
                 }
 
-                currentPpmpId = null;
                 const reviseBtn = document.getElementById('reviseBtn');
                 if(reviseBtn) reviseBtn.style.display = 'none';
-
-                projects.length = 0; 
-                renderTable();
-
+                
                 const formSection = document.querySelector('.form-section');
                 if(formSection) formSection.style.display = 'block';
 
@@ -355,26 +426,33 @@ document.addEventListener("DOMContentLoaded", () => {
                     submitBtn.disabled = false;
                     submitBtn.style.background = "";
                 }
+                
+                const draftBtn = document.getElementById("saveDraftBtn");
+                if (draftBtn) {
+                    draftBtn.innerText = "📝 Save as Draft";
+                    draftBtn.style.display = "inline-block";
+                }
+
+                renderTable();
+
             } else if (data.status === 'success') {
-                //PPMP EXISTS! Update Status UI
                 document.getElementById('uiRemainingBudget').innerText = '₱' + (data.remaining_budget || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
                 document.getElementById('uiPpmpStatus').innerText = data.current_status;
-                document.getElementById('uiPpmpStatus').style.color = '#f39c12'; // Warning/Pending Color
                 
-                isLocked = true; 
-                
-                const actionHeader = document.getElementById('actionHeader');
-                if(actionHeader) actionHeader.style.display = 'none'; 
-                
-                const typeDropdown = document.getElementById("ppmpType");
-                if (typeDropdown) {
-                    // 1. Set the value from the database
-                    typeDropdown.value = data.data.ppmp_type_id; 
-                    
-                    // 2. Lock it so they can't change it in View Mode
-                    typeDropdown.disabled = true;
-                    typeDropdown.style.background = "#e9ecef"; 
+                if (data.data.status_id === 4 && data.data.admin_remarks) {
+                    document.getElementById('uiPpmpStatus').style.color = '#dc3545';
+                    if (feedbackAlert && feedbackText) {
+                        feedbackText.innerText = `"${data.data.admin_remarks}"`;
+                        feedbackAlert.style.display = 'block';
+                    }
+                } else {
+                    document.getElementById('uiPpmpStatus').style.color = '#f39c12';
+                    if (feedbackAlert) feedbackAlert.style.display = 'none';
+                    if (data.data.status_id === 3) {
+                         document.getElementById('uiPpmpStatus').style.color = '#198754';
+                    }
                 }
+
                 projects.length = 0; 
                 data.data.items.forEach(item => {
                     projects.push({
@@ -383,7 +461,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         quantity: item.quantity,
                         mode: item.mode_of_procurement,
                         preProc: item.pre_proc_conference || item.pre_procurement_conference, 
-                        start: item.start_date.substring(0, 7), // Trims "2026-01-01" down to "2026-01" for the month input
+                        start: item.start_date.substring(0, 7), 
                         end: item.end_date.substring(0, 7),
                         implementation: item.implementation_period,
                         source: item.source_of_funds,
@@ -395,26 +473,61 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 currentPpmpId = data.data.id;
                 
+                const actionHeader = document.getElementById('actionHeader');
+                const typeDropdown = document.getElementById("ppmpType");
+                const submitBtn = document.getElementById("submitToDatabase");
+                const draftBtn = document.getElementById("saveDraftBtn");
+                const formSection = document.querySelector('.form-section');
                 const reviseBtn = document.getElementById('reviseBtn');
-                if(reviseBtn) reviseBtn.style.display = 'inline-block';
+
+                // --- NEW DRAFT CHECK LOGIC ---
+                if (data.data.status_id === 1) { // 1 = DRAFT
+                    isLocked = false; 
+                    document.getElementById('uiPpmpStatus').style.color = '#6c757d'; // Gray for draft
+                    
+                    if(actionHeader) actionHeader.style.display = ''; 
+                    if(formSection) formSection.style.display = 'block';
+                    
+                    if(typeDropdown) {
+                        typeDropdown.value = data.data.ppmp_type_id; 
+                        typeDropdown.disabled = false;
+                        typeDropdown.style.background = ""; 
+                    }
+                    if(submitBtn) {
+                        submitBtn.innerText = "🚀 Submit for Approval";
+                        submitBtn.disabled = false;
+                        submitBtn.style.background = "";
+                    }
+                    if(draftBtn) {
+                        draftBtn.innerText = "💾 Update Draft";
+                        draftBtn.style.display = "inline-block";
+                    }
+                    if(reviseBtn) reviseBtn.style.display = 'none';
+
+                } else {
+                    // It is Pending, Approved, or Returned -> LOCK THE UI!
+                    isLocked = true; 
+                    if(actionHeader) actionHeader.style.display = 'none'; 
+                    if(formSection) formSection.style.display = 'none';
+                    if(draftBtn) draftBtn.style.display = 'none';
+                    if(reviseBtn) reviseBtn.style.display = 'inline-block';
+                    
+                    if(typeDropdown) {
+                        typeDropdown.value = data.data.ppmp_type_id; 
+                        typeDropdown.disabled = true;
+                        typeDropdown.style.background = "#e9ecef"; 
+                    }
+                    if(submitBtn) {
+                        submitBtn.innerText = "🔒 PPMP Submitted";
+                        submitBtn.disabled = true;
+                        submitBtn.style.background = "#6c757d";
+                    }
+                }
 
                 renderTable();
 
-                // 4. Update the Header Dropdowns to match the saved data
                 const yearDropdown = document.getElementById("fiscalYear");
                 if(yearDropdown) yearDropdown.value = data.data.fiscal_year;
-
-                // 5. Lock the View (Prevent re-submission for now)
-                const submitBtn = document.getElementById("submitToDatabase");
-                if(submitBtn) {
-                    submitBtn.innerText = "🔒 PPMP Submitted";
-                    submitBtn.disabled = true;
-                    submitBtn.style.background = "#6c757d";
-                }
-                
-                // Hide the "Add Project" form so they just see their table
-                const formSection = document.querySelector('.form-section');
-                if(formSection) formSection.style.display = 'none';
             }
         })
         .catch(error => {
@@ -425,30 +538,25 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     // ==========================================
-    // NEW: UNLOCK DASHBOARD FOR REVISIONS
+    // UNLOCK DASHBOARD FOR REVISIONS
     // ==========================================
     const reviseBtn = document.getElementById('reviseBtn');
     if (reviseBtn) {
         reviseBtn.addEventListener('click', () => {
-            // 1. Flip the master switch
             isLocked = false;
 
-            // 2. Un-hide the Action Column
             const actionHeader = document.getElementById('actionHeader');
             if(actionHeader) actionHeader.style.display = ''; 
 
-            // 3. Unlock the Dropdown
             const typeDropdown = document.getElementById('ppmpType');
             if(typeDropdown) {
                 typeDropdown.disabled = false;
                 typeDropdown.style.background = ""; 
             }
 
-            // 4. Reveal the Add Project Form
             const formSection = document.querySelector('.form-section');
             if(formSection) formSection.style.display = 'block';
 
-            // 5. Change the Submit Button to reflect it's a revision
             const submitBtn = document.getElementById("submitToDatabase");
             if(submitBtn) {
                 submitBtn.innerText = "🚀 Submit Revision (v2)";
@@ -456,83 +564,112 @@ document.addEventListener("DOMContentLoaded", () => {
                 submitBtn.style.background = "";
             }
 
-            // 6. Hide the Revise button itself
             reviseBtn.style.display = 'none';
 
-            // 7. Redraw the table so the Edit/Delete buttons appear!
             renderTable();
         });
     }
 
-const submitBtn = document.getElementById("submitToDatabase");
-    if(submitBtn) {
-        submitBtn.onclick = () => {
-            const token = localStorage.getItem('auth_token');
-            
-            if (!token) {
-                alert("Security Error: You must be logged in to submit.");
-                return;
-            }
+    // ==========================================
+    // UNIFIED SAVE / SUBMIT LOGIC
+    // ==========================================
+    function savePpmpToDatabase(targetStatusId, btnElement, defaultText) {
+        const token = localStorage.getItem('auth_token');
+        
+        if (!token) {
+            alert("Security Error: You must be logged in to submit.");
+            return;
+        }
 
-            if (projects.length === 0) {
-                return alert("Please add at least one project before submitting.");
-            }
+        if (projects.length === 0) {
+            return alert("Please add at least one project before saving.");
+        }
 
-            const payload = {
-                fiscal_year: document.getElementById("fiscalYear").value,
-                ppmp_type_id: document.getElementById("ppmpType").value,
-                parent_id: currentPpmpId,
-                items: projects 
-            };
-
-            const btn = document.getElementById("submitToDatabase");
-            btn.innerText = "Submitting...";
-            btn.disabled = true;
-
-            fetch('http://127.0.0.1:8000/api/ppmp/submit', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'Authorization': `Bearer ${token}` 
-                },
-                body: JSON.stringify(payload)
-            })
-            .then(response => response.json())
-            .then(data => {
-                btn.innerText = "🚀 Submit to Database";
-                btn.disabled = false;
-                
-                if(data.status === 'success') {
-                    alert("PPMP Successfully Submitted for Approval!");
-                    fetchCurrentPpmp();
-                } else {
-                    alert("Error saving: " + (data.message || "Please check your inputs."));
-                }
-            })
-            .catch(error => {
-                console.error("Submission Error:", error);
-                btn.innerText = "🚀 Submit to Database";
-                btn.disabled = false;
-                alert("Failed to connect to the server.");
-            });
+        const payload = {
+            fiscal_year: document.getElementById("fiscalYear").value,
+            ppmp_type_id: document.getElementById("ppmpType").value,
+            parent_id: currentPpmpId,
+            status_id: targetStatusId, // Dynamically sends 1 (Draft) or 2 (Pending)
+            items: projects 
         };
+
+        btnElement.innerText = "Saving...";
+        btnElement.disabled = true;
+
+        fetch('http://127.0.0.1:8000/api/ppmp/submit', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(response => {
+            // --- NEW: CATCH DEAD TOKENS ON SAVE ---
+            if (response.status === 401) {
+                btnElement.innerText = defaultText;
+                btnElement.disabled = false;
+                localStorage.clear();
+                alert("Session Expired: Your account was logged into from another device.");
+                window.location.replace("index.html");
+                throw new Error("Token Invalidated");
+            }
+            return response.json();
+        })
+        .then(data => {
+            btnElement.innerText = defaultText;
+            btnElement.disabled = false;
+            
+            if(data.status === 'success') {
+                alert(targetStatusId === 1 ? "Draft successfully saved!" : "PPMP Successfully Submitted for Approval!");
+                fetchCurrentPpmp();
+            } else {
+                alert("Error saving: " + (data.message || "Please check your inputs."));
+            }
+        })
+        .catch(error => {
+            if (error.message !== "Token Invalidated") {
+                console.error("Submission Error:", error);
+                btnElement.innerText = defaultText;
+                btnElement.disabled = false;
+                alert("Failed to connect to the server.");
+            }
+        });
     }
 
+    // Bind the unified function to both buttons
+    const submitBtn = document.getElementById("submitToDatabase");
+    const draftBtn = document.getElementById("saveDraftBtn");
+
+    if (submitBtn) submitBtn.onclick = () => savePpmpToDatabase(2, submitBtn, "🚀 Submit to Database"); // ID 2 = Pending
+    if (draftBtn) draftBtn.onclick = () => savePpmpToDatabase(1, draftBtn, "📝 Save as Draft"); // ID 1 = Draft
+
+    // ==========================================
+    // USER ROUTE GUARD (Persist Login on Refresh)
+    // ==========================================
     if (localStorage.getItem('auth_token')) {
-      const userDataStr = localStorage.getItem('user_data');
-      if (userDataStr) {
-          const user = JSON.parse(userDataStr);
-          if (user.role_id === 1) {
-              localStorage.clear();
-              window.location.replace("admin.html"); 
-          } else {
-              document.getElementById('loginSection').style.display = 'none';
-              document.getElementById('mainPpmpApp').style.display = 'block';
-              document.getElementById('welcomeUser').innerText = "Welcome, " + (user.unit_name || "");
-              loadUserData();
-              fetchCurrentPpmp();
-          }
-      }
+        const userDataStr = localStorage.getItem('user_data');
+        if (userDataStr) {
+            const user = JSON.parse(userDataStr);
+            
+            // If an Admin accidentally loads index.html, safely route them away
+            if (user.role_id === 1) {
+                window.location.replace("admin.html"); 
+            } else {
+                // If it's a Sector User, hide the login screen and load their dashboard!
+                const loginSec = document.getElementById('loginSection');
+                const appSec = document.getElementById('mainPpmpApp');
+                
+                if(loginSec) loginSec.style.display = 'none';
+                if(appSec) appSec.style.display = 'block';
+                
+                const welcomeObj = document.getElementById('welcomeUser');
+                if(welcomeObj) welcomeObj.innerText = "Welcome, " + (user.unit_name || "");
+                
+                loadUserData();
+                fetchCurrentPpmp();
+            }
+        }
     }
 });

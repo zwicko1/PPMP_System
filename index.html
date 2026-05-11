@@ -92,6 +92,15 @@
 
 
           <!-- ================= SECTOR BUDGET DASHBOARD ================= -->
+          <div id="adminFeedbackAlert" style="display: none; background-color: #fff3cd; color: #856404; padding: 15px 20px; border: 1px solid #ffeeba; border-radius: 6px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 1.2em; margin-right: 10px;">⚠️</span>
+                <strong style="font-size: 1.1em;">PPMP Returned for Revision</strong>
+            </div>
+            <div style="padding-left: 35px; font-size: 0.95em; line-height: 1.5;">
+                <strong>Admin Remarks:</strong> <span id="adminFeedbackText" style="font-style: italic;"></span>
+            </div>
+          </div>
                 <div id="dashboardStatusPanel" style="background: #f8f9fa; padding: 20px; margin: 20px; border-radius: 8px; border-left: 5px solid #0d6efd; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                     <div>
                         <span style="font-size: 0.9em; color: #6c757d; font-weight: 600; text-transform: uppercase;">Allocated Budget</span>
@@ -206,6 +215,9 @@
             <div class="button-group" style="margin-top: -30px; margin-right: -5px;">
               <button type="button" id="exportExcel">⬇️ Export to Excel / CSV</button>
               <button type="button" id="printPPMP">🖨️ Print / Save as PDF</button>
+              <button id="saveDraftBtn" type="button" style="background-color: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 10px; display: none;">
+                📝 Save as Draft
+              </button>
               <button type="button" id="submitToDatabase" style="background: #198754; color: white;">🚀 Submit to Database</button>
             </div>
           </div>

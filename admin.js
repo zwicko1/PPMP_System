@@ -97,16 +97,61 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ==========================================
-    // BULLETPROOF ADMIN LOGOUT LOGIC
+    // DYNAMIC SECURE LOGOUT & IDLE TIMER (ADMIN)
     // ==========================================
+    let adminIdleTimer;
+    window.IDLE_TIMEOUT_MS = 300000; // Fallback default (5 mins)
+
+    // FETCH THE DYNAMIC TIMER ON LOAD
+    if (localStorage.getItem('auth_token')) {
+        fetch('http://127.0.0.1:8000/api/settings/timeout', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.timeout_ms) {
+                window.IDLE_TIMEOUT_MS = data.timeout_ms;
+                // Pre-fill the input box so the Admin sees the current setting (convert ms back to minutes)
+                const inputEl = document.getElementById('adminTimeoutInput');
+                if(inputEl) inputEl.value = (data.timeout_ms / 1000 / 60);
+                
+                resetAdminIdleTimer(); 
+            }
+        });
+    }
+
+    function performAdminSecureLogout(isTimeout = false) {
+        const token = localStorage.getItem('auth_token');
+        if (token) {
+            document.body.style.cursor = 'wait';
+            fetch('http://127.0.0.1:8000/api/logout', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+            }).finally(() => {
+                document.body.style.cursor = 'default';
+                localStorage.clear();
+                if (isTimeout) alert("Security Timeout: Admin session expired due to inactivity.");
+                window.location.replace('admin.html');
+            });
+        }
+    }
+
+    function resetAdminIdleTimer() {
+        clearTimeout(adminIdleTimer);
+        if (localStorage.getItem('auth_token')) {
+            adminIdleTimer = setTimeout(() => performAdminSecureLogout(true), window.IDLE_TIMEOUT_MS);
+        }
+    }
+
+    ['mousedown', 'keydown', 'scroll', 'touchstart'].forEach(evt => {
+        document.addEventListener(evt, resetAdminIdleTimer);
+    });
+
     document.addEventListener('click', function(e) {
         const clickedLogout = e.target.closest('#adminLogoutBtn');
         if (clickedLogout) {
             e.preventDefault();
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('user_data');
-            localStorage.clear();
-            window.location.replace('admin.html');
+            performAdminSecureLogout(false);
         }
     });
 
@@ -122,25 +167,21 @@ document.addEventListener("DOMContentLoaded", () => {
         tabBudget.addEventListener("click", () => {
             budgetPanel.style.display = "block";
             ppmpPanel.style.display = "none";
-            
             tabBudget.style.background = "#c14f3b";
             tabBudget.style.border = "none";
             tabPpmp.style.background = "transparent";
             tabPpmp.style.border = "1px solid #7f8c8d";
-            
             loadDashboard(); 
         });
 
         tabPpmp.addEventListener("click", () => {
             budgetPanel.style.display = "none";
             ppmpPanel.style.display = "block";
-            
             tabPpmp.style.background = "#c14f3b";
             tabPpmp.style.border = "none";
             tabBudget.style.background = "transparent";
             tabBudget.style.border = "1px solid #7f8c8d";
-            
-            loadAdminPpmps(); // Fetch PPMP data when tab is clicked
+            loadAdminPpmps(); 
         });
     }
 
@@ -466,7 +507,10 @@ document.addEventListener("DOMContentLoaded", () => {
             subtitleEl.innerText = "Carefully review the requested items below before making a decision.";
             
             // 1. Generate the <option> tags dynamically from our database array
-            let optionsHtml = window.ppmpStatuses.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+            // Filter out the Draft status (ID 1) so the Admin cannot select it!
+            let optionsHtml = window.ppmpStatuses
+                .filter(s => s.id !== 1)
+                .map(s => `<option value="${s.id}">${s.name}</option>`).join('');
             
             // 2. Build the new Control Panel UI
             footerEl.innerHTML = `

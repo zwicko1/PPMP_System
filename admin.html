@@ -55,6 +55,7 @@
         <div style="background: #34495e; padding: 10px 20px; display: flex; gap: 15px;">
             <button id="tabBudget" style="background: #c14f3b; color: white; border: none; padding: 8px 20px; cursor: pointer; border-radius: 4px; font-weight: 600;">💰 Budget Allocations</button>
             <button id="tabPpmp" style="background: transparent; color: white; border: 1px solid #7f8c8d; padding: 8px 20px; cursor: pointer; border-radius: 4px; font-weight: 600;">📄 PPMP Approvals</button>
+            <button id="tabSettings" style="background: transparent; color: white; border: 1px solid #7f8c8d; padding: 8px 20px; cursor: pointer; border-radius: 4px; font-weight: 600;">⚙️ System Settings</button>
         </div>
 
         <div class="admin-container">
@@ -116,6 +117,14 @@
                     </tbody>
                 </table>
             </div>
+
+            <div id="settingsPanel" style="display: none; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                <div style="border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; margin-bottom: 20px;">
+                    <h3 style="margin: 0; color: #333;">System Settings</h3>
+                </div>
+                
+            </div>
+            
         </div>
     </div>
     <div class="modal-overlay" id="budgetModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;">
