@@ -51,11 +51,11 @@
             </div>
         </div>
 
-        <!-- NEW: Sub-Navbar for Tab Navigation -->
+        <!-- Sub-Navbar for Tab Navigation -->
         <div style="background: #34495e; padding: 10px 20px; display: flex; gap: 15px;">
             <button id="tabBudget" style="background: #c14f3b; color: white; border: none; padding: 8px 20px; cursor: pointer; border-radius: 4px; font-weight: 600;">💰 Budget Allocations</button>
             <button id="tabPpmp" style="background: transparent; color: white; border: 1px solid #7f8c8d; padding: 8px 20px; cursor: pointer; border-radius: 4px; font-weight: 600;">📄 PPMP Approvals</button>
-            <button id="tabSettings" style="background: transparent; color: white; border: 1px solid #7f8c8d; padding: 8px 20px; cursor: pointer; border-radius: 4px; font-weight: 600;">⚙️ System Settings</button>
+            <button id="tabData" style="background: transparent; color: white; border: 1px solid #7f8c8d; padding: 8px 20px; cursor: pointer; border-radius: 4px; font-weight: 600;">⚙️ Data Management</button>
         </div>
 
         <div class="admin-container">
@@ -118,11 +118,35 @@
                 </table>
             </div>
 
-            <div id="settingsPanel" style="display: none; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+            <div id="dataPanel" style="display: none; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
                 <div style="border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; margin-bottom: 20px;">
-                    <h3 style="margin: 0; color: #333;">System Settings</h3>
+                    <h3 style="margin: 0; color: #333;">PPMP Database Configuration</h3>
+                    <p style="margin: 5px 0 0 0; color: #6c757d; font-size: 0.9rem;">Manage document types and workflow statuses.</p>
                 </div>
                 
+                <div style="display: flex; gap: 30px;">
+                    <div style="flex: 1; background: #f8f9fa; padding: 20px; border: 1px solid #dee2e6; border-radius: 6px;">
+                        <h4 style="margin-top: 0; color: #c14f3b;">📄 Document Types</h4>
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                            <input type="text" id="newTypeInput" placeholder="Add new type..." style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                            <button onclick="saveDataEntry('types', 'newTypeInput')" style="background: #198754; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">Add</button>
+                        </div>
+                        <ul id="typesList" style="list-style: none; padding: 0; margin: 0;">
+                            <li>Loading...</li>
+                        </ul>
+                    </div>
+
+                    <div style="flex: 1; background: #f8f9fa; padding: 20px; border: 1px solid #dee2e6; border-radius: 6px;">
+                        <h4 style="margin-top: 0; color: #0d6efd;">🔄 Workflow Statuses</h4>
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                            <input type="text" id="newStatusInput" placeholder="Add new status..." style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                            <button onclick="saveDataEntry('statuses', 'newStatusInput')" style="background: #198754; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">Add</button>
+                        </div>
+                        <ul id="statusesList" style="list-style: none; padding: 0; margin: 0;">
+                            <li>Loading...</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
             
         </div>

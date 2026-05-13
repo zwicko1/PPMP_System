@@ -24,9 +24,17 @@ document.addEventListener("DOMContentLoaded", () => {
         loginBtn.addEventListener('click', function(e) {
             e.preventDefault();
 
-            const email = document.getElementById('emailInput').value;
-            const password = document.getElementById('passwordInput').value;
+            const emailInputEl = document.getElementById('emailInput');
+            const passwordInputEl = document.getElementById('passwordInput');
             const messageDisplay = document.getElementById('loginMessage');
+
+            const email = emailInputEl.value;
+            const password = passwordInputEl.value;
+
+            emailInputEl.disabled = true;
+            passwordInputEl.disabled = true;
+            loginBtn.disabled = true;
+            loginBtn.style.cursor = "wait";
 
             messageDisplay.style.color = "blue";
             messageDisplay.innerText = "Authenticating...";
@@ -59,12 +67,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 } else {
                     messageDisplay.style.color = "red";
                     messageDisplay.innerText = data.message || "Login failed.";
+                    
+                    emailInputEl.disabled = false;
+                    passwordInputEl.disabled = false;
+                    loginBtn.disabled = false;
+                    loginBtn.style.cursor = "pointer";
                 }
             })
             .catch(error => { 
                 console.error("Login error:", error); 
                 messageDisplay.style.color = "red";
                 messageDisplay.innerText = "Server connection failed. Check console.";
+                
+                emailInputEl.disabled = false;
+                passwordInputEl.disabled = false;
+                loginBtn.disabled = false;
+                loginBtn.style.cursor = "pointer";
             });
         });
     }
@@ -83,16 +101,18 @@ document.addEventListener("DOMContentLoaded", () => {
             ppmpTypeDropdown.innerHTML = ''; // Clear the "Loading..." text
             
             types.forEach(type => {
-                const option = document.createElement("option");
-                option.value = type.id;
-                option.textContent = type.name;
-                
-                // Keep your "Indicative" default feature!
-                if (type.id === '1') {
-                    option.selected = true;
+                if (type.is_active === 1 || type.is_active === true || type.is_active === undefined) {
+                    const option = document.createElement("option");
+                    option.value = type.id;
+                    option.textContent = type.name;
+                    
+                    // Keep your "Indicative" default feature!
+                    if (type.id === 1 || type.id === '1') {
+                        option.selected = true;
+                    }
+                    
+                    ppmpTypeDropdown.appendChild(option);
                 }
-                
-                ppmpTypeDropdown.appendChild(option);
             });
         })
         .catch(error => {
@@ -100,14 +120,27 @@ document.addEventListener("DOMContentLoaded", () => {
             ppmpTypeDropdown.innerHTML = '<option value="">Error loading types</option>';
         });
     }
+
     // ==========================================
-    // SECURE LOGOUT & IDLE TIMER
+    // DYNAMIC SECURE LOGOUT & IDLE TIMER
     // ==========================================
     let idleTimer;
-    
-    // 🛑 CHANGE THIS: Set to 5000 (5 seconds) for testing right now! 
-    // When you confirm it works, change it back to: 5 * 60 * 1000
-    const IDLE_TIMEOUT_MS = 5000; 
+    window.IDLE_TIMEOUT_MS = 300000; // Fallback default (5 mins)
+
+    // FETCH THE DYNAMIC TIMER ON LOAD
+    if (localStorage.getItem('auth_token')) {
+        fetch('http://127.0.0.1:8000/api/settings/timeout', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.timeout_ms) {
+                window.IDLE_TIMEOUT_MS = data.timeout_ms;
+                resetIdleTimer(); // Restart the clock with the DB time!
+            }
+        })
+        .catch(error => console.error("Could not fetch timeout settings", error));
+    }
 
     // 1. The Master Logout Function
     function performSecureLogout(isTimeout = false) {
@@ -134,7 +167,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
             localStorage.clear();
             if (window.location.pathname.includes('index.html')) {
-                window.location.reload(); // Just refresh if they are already on the login page
+                window.location.reload(); 
             }
         }
     }
@@ -142,10 +175,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // 2. The Clock Reset Function
     function resetIdleTimer() {
         clearTimeout(idleTimer);
-        // Only start the countdown if they are actively logged in
         if (localStorage.getItem('auth_token')) {
-            // When the clock hits zero, trigger the master logout!
-            idleTimer = setTimeout(() => performSecureLogout(true), IDLE_TIMEOUT_MS);
+            // USING THE GLOBAL DB VALUE HERE:
+            idleTimer = setTimeout(() => performSecureLogout(true), window.IDLE_TIMEOUT_MS);
         }
     }
 
@@ -159,7 +191,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const clickedLogout = e.target.closest('#logoutBtn');
         if (clickedLogout) {
             e.preventDefault();
-            performSecureLogout(false); // False = User clicked it manually
+            performSecureLogout(false);
         }
     });
 

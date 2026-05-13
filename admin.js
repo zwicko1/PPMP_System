@@ -1,6 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
     
-    // A flag to tell us if we should load the data at the end of the script
     let isLoggedInAdmin = false;
 
     // ==========================================
@@ -32,9 +31,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
     // ADMIN LOGIN LOGIC
     // ==========================================
-    // ==========================================
-    // ADMIN LOGIN LOGIC
-    // ==========================================
     const loginBtn = document.getElementById('adminLoginBtn');
 
     // ==========================================
@@ -60,9 +56,19 @@ document.addEventListener("DOMContentLoaded", () => {
         loginBtn.addEventListener('click', function(e) {
             e.preventDefault();
 
-            const email = document.getElementById('adminEmailInput').value;
-            const password = document.getElementById('adminPasswordInput').value;
+            // 1. Get the DOM elements
+            const emailInputEl = document.getElementById('adminEmailInput');
+            const passwordInputEl = document.getElementById('adminPasswordInput');
             const msg = document.getElementById('adminLoginMessage');
+
+            const email = emailInputEl.value;
+            const password = passwordInputEl.value;
+
+            // 2. Lock the UI!
+            emailInputEl.disabled = true;
+            passwordInputEl.disabled = true;
+            loginBtn.disabled = true;
+            loginBtn.style.cursor = "wait";
 
             msg.style.color = "blue";
             msg.innerText = "Authenticating Admin...";
@@ -78,20 +84,38 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (data.user.role_id !== 1) {
                         msg.style.color = "red";
                         msg.innerText = "Unauthorized: You are not an Administrator.";
+                        
+                        // Booting non-admins: unlock the UI
+                        emailInputEl.disabled = false;
+                        passwordInputEl.disabled = false;
+                        loginBtn.disabled = false;
+                        loginBtn.style.cursor = "pointer";
                         return;
                     }
                     localStorage.setItem('auth_token', data.token);
                     localStorage.setItem('user_data', JSON.stringify(data.user));
                     window.location.reload(); 
                 } else {
+                    // Login failed: Unlock the UI
                     msg.style.color = "red";
                     msg.innerText = data.message || "Login failed.";
+                    
+                    emailInputEl.disabled = false;
+                    passwordInputEl.disabled = false;
+                    loginBtn.disabled = false;
+                    loginBtn.style.cursor = "pointer";
                 }
             })
             .catch(error => {
                 console.error(error);
                 msg.style.color = "red";
                 msg.innerText = "Server connection failed.";
+                
+                // Network error: Unlock the UI
+                emailInputEl.disabled = false;
+                passwordInputEl.disabled = false;
+                loginBtn.disabled = false;
+                loginBtn.style.cursor = "pointer";
             });
         });
     }
@@ -160,29 +184,53 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
     const tabBudget = document.getElementById("tabBudget");
     const tabPpmp = document.getElementById("tabPpmp");
+    const tabData = document.getElementById("tabData");
+
     const budgetPanel = document.getElementById("budgetPanel");
     const ppmpPanel = document.getElementById("ppmpPanel");
+    const dataPanel = document.getElementById("dataPanel");
 
-    if (tabBudget && tabPpmp) {
+    function resetTabs() {
+        [tabBudget, tabPpmp, tabData].forEach(tab => {
+            if(tab) {
+                tab.style.background = "transparent";
+                tab.style.border = "1px solid #7f8c8d";
+            }
+        });
+        [budgetPanel, ppmpPanel, dataPanel].forEach(panel => {
+            if(panel) panel.style.display = "none";
+        });
+    }
+
+    // If all three tabs exist in the HTML, activate them!
+    if (tabBudget && tabPpmp && tabData) {
+        
         tabBudget.addEventListener("click", () => {
+            resetTabs();
             budgetPanel.style.display = "block";
-            ppmpPanel.style.display = "none";
             tabBudget.style.background = "#c14f3b";
             tabBudget.style.border = "none";
-            tabPpmp.style.background = "transparent";
-            tabPpmp.style.border = "1px solid #7f8c8d";
-            loadDashboard(); 
+            if (typeof loadDashboard === "function") loadDashboard(); 
         });
 
         tabPpmp.addEventListener("click", () => {
-            budgetPanel.style.display = "none";
+            resetTabs();
             ppmpPanel.style.display = "block";
             tabPpmp.style.background = "#c14f3b";
             tabPpmp.style.border = "none";
-            tabBudget.style.background = "transparent";
-            tabBudget.style.border = "1px solid #7f8c8d";
-            loadAdminPpmps(); 
+            if (typeof loadAdminPpmps === "function") loadAdminPpmps(); 
         });
+
+        tabData.addEventListener("click", () => {
+            resetTabs();
+            dataPanel.style.display = "block";
+            tabData.style.background = "#c14f3b";
+            tabData.style.border = "none";
+            if (typeof window.loadAdminDataTables === "function") window.loadAdminDataTables(); 
+        });
+        
+    } else {
+        console.error("Tab Navigation Error: One of the tab or panel IDs is missing in the HTML!");
     }
 
     // ==========================================
@@ -343,7 +391,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #6c757d;">Loading dashboard...</td></tr>';
 
-        // NEW: Fetch ALL PPMPs from the new route
+        //Fetch ALL PPMPs from the new route
         fetch('http://127.0.0.1:8000/api/admin/ppmps/all', {
             headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
         })
@@ -586,10 +634,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ==========================================
-    // INITIALIZE APP 
-    // ==========================================
-    // ==========================================
-    // 8. INITIALIZE APP & FETCH GLOBALS
+    // INITIALIZE APP & FETCH GLOBALS
     // ==========================================
     window.ppmpStatuses = []; // Global array to hold the dynamic statuses
 
@@ -601,7 +646,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(response => response.json())
         .then(data => {
             if(data.status === 'success') {
-                window.ppmpStatuses = data.data; // Save them for later!
+                window.ppmpStatuses = data.data;
             }
         })
         .catch(error => console.error("Failed to load statuses:", error));
@@ -611,10 +656,6 @@ document.addEventListener("DOMContentLoaded", () => {
         fetchDynamicStatuses(); // Grab statuses from the DB immediately
         loadDashboard();
     }
-
-    // ==========================================
-    // THE DECISION ENGINE (Approve / Reject)
-    // ==========================================
 
     // ==========================================
     // THE DYNAMIC DECISION ENGINE 
@@ -674,4 +715,119 @@ document.addEventListener("DOMContentLoaded", () => {
             alert("Failed to connect to the server.");
         });
     }
+
+    // ==========================================
+    // DATA MANAGEMENT ENGINE (TYPES & STATUSES)
+    // ==========================================
+    window.loadAdminDataTables = function() {
+        const token = localStorage.getItem('auth_token');
+        
+        // 1. Fetch Types
+        fetch('http://127.0.0.1:8000/api/admin/ppmp-types', { headers: { 'Authorization': `Bearer ${token}` } })
+        .then(res => res.json())
+        .then(data => renderDataList('typesList', data.data, 'types'))
+        .catch(err => console.error(err));
+
+        // 2. Fetch Statuses (Assuming you have this GET route!)
+        fetch('http://127.0.0.1:8000/api/admin/ppmp-statuses', { headers: { 'Authorization': `Bearer ${token}` } })
+        .then(res => res.json())
+        .then(data => renderDataList('statusesList', data.data, 'statuses'))
+        .catch(err => console.error(err));
+    };
+
+    function renderDataList(elementId, items, tableType) {
+        const ul = document.getElementById(elementId);
+        if(!ul) return;
+        ul.innerHTML = '';
+        
+        items.forEach(item => {
+            const li = document.createElement('li');
+            li.style.cssText = "display: flex; justify-content: space-between; background: white; padding: 10px; border: 1px solid #ddd; margin-bottom: 8px; border-radius: 4px; align-items: center;";
+            
+            const isProtected = (tableType === 'statuses' && [1,2,3,4].includes(item.id));
+            const inputState = isProtected ? 'disabled' : '';
+            const saveBtnState = isProtected ? 'display: none;' : '';
+            
+
+            const isActive = item.is_active !== 0 && item.is_active !== false; 
+            const toggleColor = isActive ? '#dc3545' : '#198754';
+            const toggleText = isActive ? '🚫 Disable' : '✅ Enable';
+            const textStyle = isActive ? '' : 'text-decoration: line-through; color: #adb5bd;';
+            
+            const toggleBtnHtml = !isProtected ? 
+                `<button onclick="toggleDataStatus('${tableType}', ${item.id})" style="background: ${toggleColor}; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em; font-weight: bold; margin-right: 5px;">${toggleText}</button>` : '';
+
+            li.innerHTML = `
+                <input type="text" id="edit_${tableType}_${item.id}" value="${item.name}" ${inputState} style="border: none; flex: 1; font-family: inherit; font-size: 0.95em; background: transparent; outline: none; ${textStyle} ${isProtected ? 'color: #999;' : ''}">
+                <div>
+                    ${toggleBtnHtml}
+                    <button onclick="updateDataEntry('${tableType}', ${item.id})" style="background: #0d6efd; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: bold; ${saveBtnState}">💾 Save</button>
+                </div>
+            `;
+            ul.appendChild(li);
+        });
+    }
+
+    window.saveDataEntry = function(tableType, inputId) {
+        const token = localStorage.getItem('auth_token');
+        const nameVal = document.getElementById(inputId).value.trim();
+        if(!nameVal) return alert("Please enter a name.");
+
+        fetch(`http://127.0.0.1:8000/api/admin/ppmp-${tableType}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ name: nameVal })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'success') {
+                document.getElementById(inputId).value = '';
+                loadAdminDataTables(); // Refresh lists
+            } else {
+                alert("Error saving.");
+            }
+        });
+    };
+
+    window.updateDataEntry = function(tableType, id) {
+        const token = localStorage.getItem('auth_token');
+        const nameVal = document.getElementById(`edit_${tableType}_${id}`).value.trim();
+        
+        fetch(`http://127.0.0.1:8000/api/admin/ppmp-${tableType}/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ name: nameVal })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'success') {
+                alert('Successfully updated!');
+            } else {
+                alert('Error updating.');
+            }
+        });
+    };
+
+    window.toggleDataStatus = function(tableType, id) {
+        const token = localStorage.getItem('auth_token');
+        
+        // Safety check to ensure we only toggle tables that support it
+        if(tableType !== 'types') {
+            alert("Disabling is currently only supported for Document Types.");
+            return;
+        }
+
+        fetch(`http://127.0.0.1:8000/api/admin/ppmp-${tableType}/${id}/toggle`, {
+            method: 'PATCH', // We use PATCH because we are only updating one specific state
+            headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'success') {
+                loadAdminDataTables(); // Instantly refresh the UI to show the new colors!
+            } else {
+                alert('Error toggling status.');
+            }
+        });
+    };
 });
