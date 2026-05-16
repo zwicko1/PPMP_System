@@ -50,7 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     localStorage.setItem('auth_token', data.token);
                     localStorage.setItem('user_data', JSON.stringify(data.user));
 
-                    resetIdleTimer();
+                    fetchDynamicTimeout();
 
                     if (data.user.role_id === 1) {
                         messageDisplay.style.color = "orange";
@@ -125,22 +125,26 @@ document.addEventListener("DOMContentLoaded", () => {
     // DYNAMIC SECURE LOGOUT & IDLE TIMER
     // ==========================================
     let idleTimer;
-    window.IDLE_TIMEOUT_MS = 300000; // Fallback default (5 mins)
+    window.IDLE_TIMEOUT_MS = 300000;
 
-    // FETCH THE DYNAMIC TIMER ON LOAD
-    if (localStorage.getItem('auth_token')) {
-        fetch('http://127.0.0.1:8000/api/settings/timeout', {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.timeout_ms) {
-                window.IDLE_TIMEOUT_MS = data.timeout_ms;
-                resetIdleTimer(); // Restart the clock with the DB time!
-            }
-        })
-        .catch(error => console.error("Could not fetch timeout settings", error));
-    }
+    window.fetchDynamicTimeout = function() {
+        const token = localStorage.getItem('auth_token');
+        if (token) {
+            fetch('http://127.0.0.1:8000/api/settings/timeout', {
+                headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.timeout_ms) {
+                    window.IDLE_TIMEOUT_MS = data.timeout_ms;
+                    resetIdleTimer();
+                }
+            })
+            .catch(error => console.error("Could not fetch timeout settings", error));
+        }
+    };
+
+    fetchDynamicTimeout();
 
     // 1. The Master Logout Function
     function performSecureLogout(isTimeout = false) {
