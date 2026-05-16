@@ -276,7 +276,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     grandTotal += amount;
                     const formattedAmount = amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                     row.innerHTML = `
-                        <td><strong>${sector.unit_name}</strong></td>
+                        <td class="office-name"><strong>${sector.unit_name}</strong></td>
                         <td style="text-align: right; color: #198754; font-weight: 600;">₱ ${formattedAmount}</td>
                         <td style="text-align: center;">
                             <button class="btn-edit" onclick="openModal(${sector.id}, '${sector.unit_name}', ${amount})">✏️ Edit</button>
@@ -284,7 +284,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     `;
                 } else {
                     row.innerHTML = `
-                        <td><strong>${sector.unit_name}</strong></td>
+                        <td class="office-name"><strong>${sector.unit_name}</strong></td>
                         <td style="text-align: right; color: #6c757d; font-style: italic;">Not yet allocated</td>
                         <td style="text-align: center;">
                             <button class="btn-allocate" onclick="openModal(${sector.id}, '${sector.unit_name}', '')">➕ Allocate</button>
