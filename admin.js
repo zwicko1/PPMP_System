@@ -717,21 +717,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ==========================================
-    // DATA MANAGEMENT ENGINE (TYPES & STATUSES)
+    // DATA MANAGEMENT ENGINE (TYPES ONLY)
     // ==========================================
     window.loadAdminDataTables = function() {
         const token = localStorage.getItem('auth_token');
         
-        // 1. Fetch Types
+        // Fetch Types
         fetch('http://127.0.0.1:8000/api/admin/ppmp-types', { headers: { 'Authorization': `Bearer ${token}` } })
         .then(res => res.json())
         .then(data => renderDataList('typesList', data.data, 'types'))
-        .catch(err => console.error(err));
-
-        // 2. Fetch Statuses (Assuming you have this GET route!)
-        fetch('http://127.0.0.1:8000/api/admin/ppmp-statuses', { headers: { 'Authorization': `Bearer ${token}` } })
-        .then(res => res.json())
-        .then(data => renderDataList('statusesList', data.data, 'statuses'))
         .catch(err => console.error(err));
     };
 
@@ -744,24 +738,19 @@ document.addEventListener("DOMContentLoaded", () => {
             const li = document.createElement('li');
             li.style.cssText = "display: flex; justify-content: space-between; background: white; padding: 10px; border: 1px solid #ddd; margin-bottom: 8px; border-radius: 4px; align-items: center;";
             
-            const isProtected = (tableType === 'statuses' && [1,2,3,4].includes(item.id));
-            const inputState = isProtected ? 'disabled' : '';
-            const saveBtnState = isProtected ? 'display: none;' : '';
-            
-
             const isActive = item.is_active !== 0 && item.is_active !== false; 
             const toggleColor = isActive ? '#dc3545' : '#198754';
             const toggleText = isActive ? '🚫 Disable' : '✅ Enable';
             const textStyle = isActive ? '' : 'text-decoration: line-through; color: #adb5bd;';
             
-            const toggleBtnHtml = !isProtected ? 
-                `<button onclick="toggleDataStatus('${tableType}', ${item.id})" style="background: ${toggleColor}; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em; font-weight: bold; margin-right: 5px;">${toggleText}</button>` : '';
+            // Toggle button is always active for Types
+            const toggleBtnHtml = `<button onclick="toggleDataStatus('${tableType}', ${item.id})" style="background: ${toggleColor}; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em; font-weight: bold; margin-right: 5px;">${toggleText}</button>`;
 
             li.innerHTML = `
-                <input type="text" id="edit_${tableType}_${item.id}" value="${item.name}" ${inputState} style="border: none; flex: 1; font-family: inherit; font-size: 0.95em; background: transparent; outline: none; ${textStyle} ${isProtected ? 'color: #999;' : ''}">
+                <input type="text" id="edit_${tableType}_${item.id}" value="${item.name}" style="border: none; flex: 1; font-family: inherit; font-size: 0.95em; background: transparent; outline: none; ${textStyle}">
                 <div>
                     ${toggleBtnHtml}
-                    <button onclick="updateDataEntry('${tableType}', ${item.id})" style="background: #0d6efd; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: bold; ${saveBtnState}">💾 Save</button>
+                    <button onclick="updateDataEntry('${tableType}', ${item.id})" style="background: #0d6efd; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: bold;">💾 Save</button>
                 </div>
             `;
             ul.appendChild(li);
@@ -782,7 +771,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(data => {
             if(data.status === 'success') {
                 document.getElementById(inputId).value = '';
-                loadAdminDataTables(); // Refresh lists
+                loadAdminDataTables(); 
             } else {
                 alert("Error saving.");
             }
@@ -810,21 +799,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.toggleDataStatus = function(tableType, id) {
         const token = localStorage.getItem('auth_token');
-        
-        // Safety check to ensure we only toggle tables that support it
-        if(tableType !== 'types') {
-            alert("Disabling is currently only supported for Document Types.");
-            return;
-        }
 
         fetch(`http://127.0.0.1:8000/api/admin/ppmp-${tableType}/${id}/toggle`, {
-            method: 'PATCH', // We use PATCH because we are only updating one specific state
+            method: 'PATCH', 
             headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` }
         })
         .then(res => res.json())
         .then(data => {
             if(data.status === 'success') {
-                loadAdminDataTables(); // Instantly refresh the UI to show the new colors!
+                loadAdminDataTables(); 
             } else {
                 alert('Error toggling status.');
             }
