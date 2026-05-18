@@ -238,14 +238,22 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
     const yearFilter = document.getElementById("yearFilter");
     if(yearFilter) {
-        yearFilter.value = new Date().getFullYear() + 1;
+        yearFilter.value = new Date().getFullYear();
         yearFilter.addEventListener("change", loadDashboard);
+    }
+
+    const ppmpYearFilter = document.getElementById("ppmpYearFilter");
+    if(ppmpYearFilter) {
+        ppmpYearFilter.value = new Date().getFullYear();
+        ppmpYearFilter.addEventListener("change", () => {
+            if (typeof window.loadAdminPpmps === "function") window.loadAdminPpmps();
+        });
     }
 
     function loadDashboard() {
         const token = localStorage.getItem('auth_token');
         const yearInput = document.getElementById("yearFilter");
-        const year = yearInput ? yearInput.value : (new Date().getFullYear() + 1);
+        const year = yearInput ? yearInput.value : (new Date().getFullYear());
         const tbody = document.getElementById("tableBody");
         
         if(!tbody) return; 
@@ -389,9 +397,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const tbody = document.getElementById('adminPendingTableBody') || document.querySelector("#adminPpmpTable tbody");
         if(!tbody) return;
 
+        const yearInput = document.getElementById("ppmpYearFilter");
+        const selectedYear = yearInput ? parseInt(yearInput.value) : (new Date().getFullYear());
+
         tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #6c757d;">Loading dashboard...</td></tr>';
 
-        //Fetch ALL PPMPs from the new route
         fetch('http://127.0.0.1:8000/api/admin/ppmps/all', {
             headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
         })
@@ -404,17 +414,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            // ALGORITHM: Group data by Sector AND Year
+            const filteredPpmps = data.data.filter(ppmp => parseInt(ppmp.fiscal_year) === selectedYear);
+
+            if (filteredPpmps.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: #6c757d; font-style: italic;">No PPMPs found for Fiscal Year ${selectedYear}.</td></tr>`;
+                return;
+            }
+
             const groupedPpmps = {};
-            data.data.forEach(ppmp => {
+            filteredPpmps.forEach(ppmp => {
                 const key = `${ppmp.user_id}_${ppmp.fiscal_year}`;
                 if(!groupedPpmps[key]) groupedPpmps[key] = [];
                 groupedPpmps[key].push(ppmp);
             });
 
-            // RENDER: Loop through each group
             Object.values(groupedPpmps).forEach(group => {
-                // Sort the group so highest version is index 0
                 group.sort((a, b) => b.version - a.version);
 
                 const latest = group[0];

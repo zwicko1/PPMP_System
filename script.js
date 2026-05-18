@@ -220,7 +220,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const fiscalYear = document.getElementById("fiscalYear");
   if(fiscalYear) {
-      fiscalYear.value = new Date().getFullYear() + 1; 
+      fiscalYear.value = new Date().getFullYear(); 
 
       fiscalYear.addEventListener('change', () => {
           fetchCurrentPpmp();
@@ -406,7 +406,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if(!token) return;
 
         const yearInput = document.getElementById("fiscalYear");
-        const selectedYear = yearInput ? yearInput.value : (new Date().getFullYear() + 1);
+        const selectedYear = yearInput ? yearInput.value : (new Date().getFullYear());
 
         fetch(`http://127.0.0.1:8000/api/ppmp/current?year=${selectedYear}`, {
             headers: { 
