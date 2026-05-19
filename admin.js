@@ -21,7 +21,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 
                 isLoggedInAdmin = true; 
             } else {
-                localStorage.clear();
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('user_data');
                 alert("Access Denied: You must be an Administrator.");
                 window.location.replace("index.html");
             }
@@ -153,7 +154,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
             }).finally(() => {
                 document.body.style.cursor = 'default';
-                localStorage.clear();
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('user_data');
                 if (isTimeout) alert("Security Timeout: Admin session expired due to inactivity.");
                 window.location.replace('admin.html');
             });
@@ -202,7 +204,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // If all three tabs exist in the HTML, activate them!
     if (tabBudget && tabPpmp && tabData) {
         
         tabBudget.addEventListener("click", () => {
@@ -236,24 +237,124 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
     // BUDGET DASHBOARD LOGIC
     // ==========================================
+    window.currentAllocatedTotal = 0;
+
     const yearFilter = document.getElementById("yearFilter");
     if(yearFilter) {
-        yearFilter.value = new Date().getFullYear();
+        yearFilter.value = new Date().getFullYear() + 1;
         yearFilter.addEventListener("change", loadDashboard);
     }
 
     const ppmpYearFilter = document.getElementById("ppmpYearFilter");
     if(ppmpYearFilter) {
-        ppmpYearFilter.value = new Date().getFullYear();
+        ppmpYearFilter.value = new Date().getFullYear() + 1;
         ppmpYearFilter.addEventListener("change", () => {
             if (typeof window.loadAdminPpmps === "function") window.loadAdminPpmps();
         });
     }
 
+    function recalculateUnallocatedRealTime() {
+        const masterStr = document.getElementById("masterBudgetInput").value.replace(/[^0-9.-]/g, '');
+        const master = parseFloat(masterStr) || 0;
+
+        const unallocated = master - window.currentAllocatedTotal;
+        const unallocatedEl = document.getElementById("summaryUnallocated");
+        
+        if (unallocatedEl) {
+            unallocatedEl.innerText = "₱ " + Math.abs(unallocated).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            if (unallocated < 0) {
+                unallocatedEl.innerText = "- " + unallocatedEl.innerText;
+                unallocatedEl.style.color = "#dc3545";
+                unallocatedEl.parentElement.style.borderLeftColor = "#dc3545";
+            } else {
+                unallocatedEl.style.color = "#198754";
+                unallocatedEl.parentElement.style.borderLeftColor = "#198754";
+            }
+        }
+    }
+
+    // --- Live Currency Formatter for Master Budget ---
+    const masterBudgetInput = document.getElementById("masterBudgetInput");
+    if (masterBudgetInput) {
+        masterBudgetInput.addEventListener("input", function(e) {
+            let value = this.value.replace(/[^0-9.]/g, '');
+            const parts = value.split('.');
+            if (parts.length > 2) value = parts[0] + '.' + parts.slice(1).join('');
+            
+            if (value) {
+                let cleanParts = value.split('.');
+                let formatted = cleanParts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                if (cleanParts.length > 1) formatted += '.' + cleanParts[1].substring(0, 2);
+                this.value = formatted;
+            } else {
+                this.value = '';
+            }
+            
+            recalculateUnallocatedRealTime();
+        });
+    }
+
+    window.saveMasterBudget = function() {
+        const token = localStorage.getItem('auth_token');
+        const year = document.getElementById("yearFilter").value;
+        const rawValue = document.getElementById("masterBudgetInput").value.replace(/[^0-9.-]/g, '');
+        const numericValue = parseFloat(rawValue) || 0;
+        
+        const btn = document.querySelector('button[onclick="saveMasterBudget()"]');
+        if (btn) {
+            btn.innerText = "Saving...";
+            btn.disabled = true;
+        }
+
+        fetch('http://127.0.0.1:8000/api/admin/master-budget', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json', 
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${token}` 
+            },
+            // Ensuring strict numeric formatting so Laravel doesn't reject it
+            body: JSON.stringify({ fiscal_year: parseInt(year), total_amount: numericValue }) 
+        })
+        .then(async res => {
+            const data = await res.json();
+            // STRICT CHECK: If Laravel doesn't explicitly say 'success', throw an error!
+            if (!res.ok || data.status !== 'success') {
+                throw new Error(data.message || "Laravel Database Error");
+            }
+            return data;
+        })
+        .then(data => {
+            if (btn) {
+                btn.innerText = "Saved!";
+                btn.style.background = "#198754";
+                setTimeout(() => {
+                    btn.innerText = "Save";
+                    btn.style.background = "#0d6efd";
+                    btn.disabled = false;
+                }, 1000);
+            }
+            loadDashboard(); 
+        })
+        .catch(err => {
+            console.error(err);
+            if(btn) { 
+                btn.innerText = "Error!"; 
+                btn.style.background = "#dc3545"; 
+                setTimeout(() => {
+                    btn.innerText = "Save";
+                    btn.style.background = "#0d6efd";
+                    btn.disabled = false;
+                }, 3000);
+            }
+            alert("Backend Failed to Save: " + err.message + "\n\nCheck your Laravel terminal for details!");
+        });
+    };
+
     function loadDashboard() {
         const token = localStorage.getItem('auth_token');
         const yearInput = document.getElementById("yearFilter");
-        const year = yearInput ? yearInput.value : (new Date().getFullYear());
+        const year = yearInput ? yearInput.value : (new Date().getFullYear() + 1);
         const tbody = document.getElementById("tableBody");
         
         if(!tbody) return; 
@@ -262,21 +363,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
         Promise.all([
             fetch('http://127.0.0.1:8000/api/admin/sectors', { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } }),
-            fetch(`http://127.0.0.1:8000/api/admin/budgets?year=${year}`, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } })
+            fetch(`http://127.0.0.1:8000/api/admin/budgets?year=${year}`, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } }),
+            fetch(`http://127.0.0.1:8000/api/admin/master-budget?year=${year}`, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } })
         ])
         .then(responses => Promise.all(responses.map(res => res.json())))
-        .then(([sectors, budgets]) => {
-            if (sectors.message === "Unauthorized") {
-                localStorage.clear();
+        .then(([sectorsResp, budgetsResp, masterResp]) => {
+            if (sectorsResp.message === "Unauthorized") {
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('user_data');
                 window.location.replace("index.html");
                 return;
+            }
+
+            const dbMasterBudget = masterResp.total_amount ? parseFloat(masterResp.total_amount) : 0;
+            const masterBudgetInput = document.getElementById("masterBudgetInput");
+            if(masterBudgetInput) {
+                masterBudgetInput.value = dbMasterBudget ? dbMasterBudget.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '';
             }
 
             tbody.innerHTML = "";
             let grandTotal = 0;
 
-            sectors.forEach(sector => {
-                const sectorBudget = budgets.find(b => b.user_id === sector.id);
+            const sectorsData = Array.isArray(sectorsResp) ? sectorsResp : (sectorsResp.data || []);
+            const budgetsData = Array.isArray(budgetsResp) ? budgetsResp : (budgetsResp.data || []);
+
+            sectorsData.forEach(sector => {
+                const sectorBudget = budgetsData.find(b => b.user_id === sector.id);
                 const row = document.createElement("tr");
 
                 if (sectorBudget) {
@@ -284,29 +396,33 @@ document.addEventListener("DOMContentLoaded", () => {
                     grandTotal += amount;
                     const formattedAmount = amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                     row.innerHTML = `
-                        <td class="office-name"><strong>${sector.unit_name}</strong></td>
+                        <td><strong>${sector.unit_name}</strong></td>
                         <td style="text-align: right; color: #198754; font-weight: 600;">₱ ${formattedAmount}</td>
                         <td style="text-align: center;">
-                            <button class="btn-edit" onclick="openModal(${sector.id}, '${sector.unit_name}', ${amount})">✏️ Edit</button>
+                            <button class="btn-edit" onclick="openModal(${sector.id}, '${sector.unit_name}', ${amount})" style="background: none; border: 1px solid #ccc; padding: 4px 8px; border-radius: 4px; cursor: pointer;">✏️ Edit</button>
                         </td>
                     `;
                 } else {
                     row.innerHTML = `
-                        <td class="office-name"><strong>${sector.unit_name}</strong></td>
+                        <td><strong>${sector.unit_name}</strong></td>
                         <td style="text-align: right; color: #6c757d; font-style: italic;">Not yet allocated</td>
                         <td style="text-align: center;">
-                            <button class="btn-allocate" onclick="openModal(${sector.id}, '${sector.unit_name}', '')">➕ Allocate</button>
+                            <button class="btn-allocate" onclick="openModal(${sector.id}, '${sector.unit_name}', '')" style="background: #0d6efd; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">➕ Allocate</button>
                         </td>
                     `;
                 }
                 tbody.appendChild(row);
             });
 
+            // 🛑 SAVE THE MATH TO GLOBAL MEMORY
+            window.currentAllocatedTotal = grandTotal;
+            
+            recalculateUnallocatedRealTime();
+
             const tfoot = document.getElementById("tableFooter");
-            const totalCell = document.getElementById("totalBudgetValue");
-            if (sectors.length > 0) {
+            if (sectorsData.length > 0) {
                 tfoot.style.display = "table-footer-group";
-                totalCell.innerText = "₱ " + grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                document.getElementById("totalBudgetValue").innerText = "₱ " + grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             } else {
                 tfoot.style.display = "none";
             }
@@ -315,13 +431,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ==========================================
-    // BUDGET MODAL LOGIC
+    // BUDGET MODAL LOGIC (With Over-Allocation Guard)
     // ==========================================
     let currentSectorId = null;
+    let currentSectorOldAmount = 0;
     const modal = document.getElementById("budgetModal");
 
     window.openModal = function(sectorId, sectorName, currentAmount) {
         currentSectorId = sectorId;
+        currentSectorOldAmount = parseFloat(currentAmount) || 0;
+
         document.getElementById("modalSectorName").innerText = sectorName;
         document.getElementById("modalYearLabel").innerText = document.getElementById("yearFilter").value;
         document.getElementById("modalBudgetInput").value = currentAmount;
@@ -341,8 +460,30 @@ document.addEventListener("DOMContentLoaded", () => {
         saveBtn.addEventListener("click", () => {
             const token = localStorage.getItem('auth_token');
             const amount = document.getElementById("modalBudgetInput").value;
+            const newAmount = parseFloat(amount) || 0;
             const year = document.getElementById("yearFilter").value;
             const errorMsg = document.getElementById("modalError");
+
+            // ----------------------------------------
+            // 🛑 OVER-ALLOCATION GUARD 🛑
+            // ----------------------------------------
+            const masterBudgetStr = document.getElementById("masterBudgetInput").value.replace(/[^0-9.-]/g, '');
+            const masterBudget = parseFloat(masterBudgetStr) || 0;
+
+            if (masterBudget <= 0) {
+                errorMsg.innerText = "Error: Please set and save a Master Institution Budget first.";
+                errorMsg.style.display = "block";
+                return;
+            }
+            
+            const availableBalance = masterBudget - (window.currentAllocatedTotal - currentSectorOldAmount);
+
+            if (newAmount > availableBalance) {
+                errorMsg.innerText = "Allocation Denied: The maximum you can assign to this specific sector is ₱" + availableBalance.toLocaleString(undefined, {minimumFractionDigits: 2}) + " (Unallocated Balance + their current budget).";
+                errorMsg.style.display = "block";
+                return;
+            }
+            // ----------------------------------------
 
             if (!amount || amount < 0) {
                 errorMsg.innerText = "Please enter a valid amount.";
