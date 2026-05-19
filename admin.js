@@ -978,4 +978,19 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     };
+
+    // ==========================================
+    // PASSWORD VISIBILITY TOGGLES (Bootstrap Icons)
+    // ==========================================
+
+    const toggleAdminPassword = document.getElementById('toggleAdminPassword');
+    const adminPasswordField = document.getElementById('adminPasswordInput');
+
+    if (toggleAdminPassword && adminPasswordField) {
+        toggleAdminPassword.addEventListener('click', function () {
+            const type = adminPasswordField.getAttribute('type') === 'password' ? 'text' : 'password';
+            adminPasswordField.setAttribute('type', type);
+            this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>'; 
+        });
+    }
 });

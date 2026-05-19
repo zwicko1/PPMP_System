@@ -260,37 +260,71 @@ document.addEventListener("DOMContentLoaded", () => {
   const totalBudgetEl = document.getElementById("totalBudget");
   const addBtn = document.getElementById("addProject");
 
-  if(addBtn) {
-      addBtn.addEventListener("click", () => {
-        const data = {
-          description: document.getElementById("description").value.trim(),
-          type: document.getElementById("type").value,
-          quantity: document.getElementById("quantity").value.trim(),
-          mode: document.getElementById("mode").value,
-          preProc: document.getElementById("preProc").value,
-          start: document.getElementById("startDate").value,
-          end: document.getElementById("endDate").value,
-          implementation: document.getElementById("implementation").value,
-          source: document.getElementById("source").value,
-          budget: parseFloat(document.getElementById("budget").value) || 0,
-          docs: document.getElementById("docs").value.trim(),
-          remarks: document.getElementById("remarks").value.trim(),
-        };
+    if(addBtn) {
+        addBtn.addEventListener("click", () => {
+            // 1. Instantly disable the button to prevent double-clicks
+            addBtn.disabled = true;
+            const originalText = addBtn.textContent;
+            addBtn.textContent = "⏳ Adding...";
+            addBtn.style.cursor = "wait";
 
-        if (!data.description) return alert("Please fill in all required fields.");
+            // Helper function to unlock the button after a short cooldown
+            const unlockButton = () => {
+                setTimeout(() => {
+                    addBtn.disabled = false;
+                    addBtn.style.cursor = "pointer";
+                    // Restore original text (unless it was changed by the edit logic)
+                    if (addBtn.textContent === "⏳ Adding...") {
+                        addBtn.textContent = "➕ Add Project";
+                    }
+                }, 1000); // 1000 milliseconds = 1 second cooldown
+            };
 
-        if (editIndex !== null) {
-          projects[editIndex] = data;
-          editIndex = null;
-          addBtn.textContent = "➕ Add Project";
-        } else {
-          projects.push(data);
-        }
+            // Clean the budget input by stripping out commas and currency signs before parsing
+            let rawBudget = document.getElementById("budget").value;
+            let cleanBudget = rawBudget.replace(/,/g, '').replace(/[^0-9.]/g, '');
 
-        renderTable();
-        document.getElementById("projectForm").reset();
-      });
-  }
+            // const selectedDocs = Array.from(document.querySelectorAll('.doc-checkbox:checked'))
+            //                           .map(cb => cb.value)
+            //                           .join(', ');
+
+            const data = {
+                description: document.getElementById("description").value.trim(),
+                type: document.getElementById("type").value,
+                quantity: document.getElementById("quantity").value.trim(),
+                mode: document.getElementById("mode").value,
+                preProc: document.getElementById("preProc").value,
+                start: document.getElementById("startDate").value,
+                end: document.getElementById("endDate").value,
+                implementation: document.getElementById("implementation").value,
+                source: document.getElementById("source").value,
+                budget: parseFloat(cleanBudget) || 0,
+                docs: document.getElementById("docs").value.trim(),
+                remarks: document.getElementById("remarks").value.trim(),
+            };
+
+            if (!data.description || !data.quantity || !data.start || !data.end || data.budget <= 0) {
+                showToast("Please fill in all required fields (Ensure Budget is greater than 0).", true);
+                unlockButton(); // Unlock immediately if validation fails
+                return;
+            }
+
+            if (editIndex !== null) {
+                projects[editIndex] = data;
+                editIndex = null;
+                // Don't set text here, let the unlockButton handle it 
+            } else {
+                projects.push(data);
+            }
+
+            renderTable();
+            document.getElementById("projectForm").reset();
+            showToast("Project successfully added to the list!", false);
+            
+            // Unlock the button after a successful addition
+            unlockButton();
+        });
+    }
 
   function renderTable() {
     if(!tableBody) return;
@@ -338,7 +372,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("endDate").value = p.end;
     document.getElementById("implementation").value = p.implementation;
     document.getElementById("source").value = p.source;
-    document.getElementById("budget").value = p.budget;
+    document.getElementById("budget").value = '₱ ' + p.budget.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2})
     document.getElementById("docs").value = p.docs;
     document.getElementById("remarks").value = p.remarks;
 
@@ -414,16 +448,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 'Accept': 'application/json'
             }
         })
-        .then(response => {
-            // THE MAGIC CHECK: If the server says "401 Unauthorized", the token is dead!
-            if (response.status === 401) {
-                localStorage.clear();
-                alert("Session Expired: Your account was logged into from another device.");
-                window.location.replace("index.html");
-                throw new Error("Token Invalidated");
-            }
-            return response.json();
-        })
+        // .then(response => {
+        //     // THE MAGIC CHECK: If the server says "401 Unauthorized", the token is dead!
+        //     if (response.status === 401) {
+        //         localStorage.clear();
+        //         alert("Session Expired: Your account was logged into from another device.");
+        //         window.location.replace("index.html");
+        //         throw new Error("Token Invalidated");
+        //     }
+        //     return response.json();
+        // })
         .then(data => {
             document.getElementById('uiAllocatedBudget').innerText = '₱' + (data.allocated_budget || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
 
@@ -641,18 +675,18 @@ document.addEventListener("DOMContentLoaded", () => {
             },
             body: JSON.stringify(payload)
         })
-        .then(response => {
-            // --- NEW: CATCH DEAD TOKENS ON SAVE ---
-            if (response.status === 401) {
-                btnElement.innerText = defaultText;
-                btnElement.disabled = false;
-                localStorage.clear();
-                alert("Session Expired: Your account was logged into from another device.");
-                window.location.replace("index.html");
-                throw new Error("Token Invalidated");
-            }
-            return response.json();
-        })
+        // .then(response => {
+        //     // --- NEW: CATCH DEAD TOKENS ON SAVE ---
+        //     if (response.status === 401) {
+        //         btnElement.innerText = defaultText;
+        //         btnElement.disabled = false;
+        //         localStorage.clear();
+        //         alert("Session Expired: Your account was logged into from another device.");
+        //         window.location.replace("index.html");
+        //         throw new Error("Token Invalidated");
+        //     }
+        //     return response.json();
+        // })
         .then(data => {
             btnElement.innerText = defaultText;
             btnElement.disabled = false;
@@ -707,5 +741,44 @@ document.addEventListener("DOMContentLoaded", () => {
                 fetchCurrentPpmp();
             }
         }
+    }
+
+    function showToast(message, isError = false) {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = 'toast-notification';
+        
+        if (isError) {
+            toast.style.background = '#dc3545';
+        }
+        
+        toast.innerHTML = `<span>${isError ? '⚠️' : '✨'}</span> <span>${message}</span>`;
+        
+        container.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 10);
+        
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => {
+                toast.remove();
+            }, 300);
+        }, 4000);
+    }
+
+    // ==========================================
+    // PASSWORD VISIBILITY TOGGLES (Bootstrap Icons)
+    // ==========================================
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordField = document.getElementById('passwordInput');
+
+    if (togglePassword && passwordField) {
+        togglePassword.addEventListener('click', function () {
+            const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordField.setAttribute('type', type);
+            this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>'; 
+        });
     }
 });
