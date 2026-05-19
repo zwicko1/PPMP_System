@@ -299,6 +299,16 @@ document.addEventListener("DOMContentLoaded", () => {
         const year = document.getElementById("yearFilter").value;
         const rawValue = document.getElementById("masterBudgetInput").value.replace(/[^0-9.-]/g, '');
         const numericValue = parseFloat(rawValue) || 0;
+
+        if (numericValue < window.currentAllocatedTotal) {
+            alert("Error: You cannot shrink the University Budget below the total amount already allocated to sectors (₱" + window.currentAllocatedTotal.toLocaleString(undefined, {minimumFractionDigits: 2}) + ").\n\nPlease reduce the Sector budgets first!");
+ 
+            const masterEl = document.getElementById("masterBudgetInput");
+            if(masterEl) masterEl.value = window.currentAllocatedTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            
+            recalculateUnallocatedRealTime();
+            return;
+        }
         
         const btn = document.querySelector('button[onclick="saveMasterBudget()"]');
         if (btn) {
@@ -478,7 +488,7 @@ document.addEventListener("DOMContentLoaded", () => {
             
             const availableBalance = masterBudget - (window.currentAllocatedTotal - currentSectorOldAmount);
 
-            if (newAmount > availableBalance) {
+            if (newAmount > currentSectorOldAmount && newAmount > availableBalance) {
                 errorMsg.innerText = "Allocation Denied: The maximum you can assign to this specific sector is ₱" + availableBalance.toLocaleString(undefined, {minimumFractionDigits: 2}) + " (Unallocated Balance + their current budget).";
                 errorMsg.style.display = "block";
                 return;
