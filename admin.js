@@ -500,7 +500,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             // ----------------------------------------
 
-            if (!amount || amount < 0) {
+            if (!newAmount || newAmount < 0) {
                 errorMsg.innerText = "Please enter a valid amount.";
                 errorMsg.style.display = "block";
                 return;
