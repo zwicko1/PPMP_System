@@ -440,16 +440,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 'Accept': 'application/json'
             }
         })
-        // .then(response => {
-        //     // THE MAGIC CHECK: If the server says "401 Unauthorized", the token is dead!
-        //     if (response.status === 401) {
-        //         localStorage.clear();
-        //         alert("Session Expired: Your account was logged into from another device.");
-        //         window.location.replace("index.html");
-        //         throw new Error("Token Invalidated");
-        //     }
-        //     return response.json();
-        // })
+        .then(response => {
+            if (response.status === 401) {
+                localStorage.clear();
+                alert("Session Expired: Your account was logged into from another device.");
+                window.location.replace("index.html");
+                throw new Error("Token Invalidated");
+            }
+            return response.json();
+        })
         .then(data => {
             document.getElementById('uiAllocatedBudget').innerText = '₱' + (data.allocated_budget || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
 
@@ -647,12 +646,17 @@ document.addEventListener("DOMContentLoaded", () => {
             return alert("Please add at least one project before saving.");
         }
 
+        const formattedProjects = projects.map(p => ({
+            ...p,
+            estimated_budget: p.budget
+        }));
+
         const payload = {
             fiscal_year: document.getElementById("fiscalYear").value,
             ppmp_type_id: document.getElementById("ppmpType").value,
             parent_id: currentPpmpId,
-            status_id: targetStatusId, // Dynamically sends 1 (Draft) or 2 (Pending)
-            items: projects 
+            status_id: targetStatusId, 
+            items: formattedProjects
         };
 
         btnElement.innerText = "Saving...";
