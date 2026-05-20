@@ -453,7 +453,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         document.getElementById("modalSectorName").innerText = sectorName;
         document.getElementById("modalYearLabel").innerText = document.getElementById("yearFilter").value;
-        document.getElementById("modalBudgetInput").value = currentAmount;
+        
+        // NEW: Format the existing amount with commas when the modal opens
+        let formattedAmount = currentSectorOldAmount ? currentSectorOldAmount.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2}) : "";
+        document.getElementById("modalBudgetInput").value = formattedAmount;
+        
         document.getElementById("modalError").style.display = "none";
         modal.style.display = "flex";
     };
@@ -469,8 +473,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if(saveBtn) {
         saveBtn.addEventListener("click", () => {
             const token = localStorage.getItem('auth_token');
-            const amount = document.getElementById("modalBudgetInput").value;
-            const newAmount = parseFloat(amount) || 0;
+            const rawAmount = document.getElementById("modalBudgetInput").value;
+            const cleanAmount = rawAmount.replace(/,/g, ''); // Strip commas!
+            const newAmount = parseFloat(cleanAmount) || 0;
             const year = document.getElementById("yearFilter").value;
             const errorMsg = document.getElementById("modalError");
 
@@ -514,9 +519,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 body: JSON.stringify({
                     user_id: currentSectorId,
                     fiscal_year: year,
-                    amount: amount
+                    amount: newAmount
                 })
             })
+            
             .then(response => response.json())
             .then(data => {
                 saveBtn.innerText = "💾 Save";
@@ -993,4 +999,17 @@ document.addEventListener("DOMContentLoaded", () => {
             this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>'; 
         });
     }
+
+    const modalBudgetInput = document.getElementById("modalBudgetInput");
+    if (modalBudgetInput) {
+        modalBudgetInput.addEventListener("input", function() {
+            let value = this.value.replace(/[^0-9.]/g, "");
+            const parts = value.split(".");
+            let intPart = parts[0];
+            let decPart = parts.length > 1 ? "." + parts.slice(1).join("") : "";
+            intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            this.value = intPart + decPart;
+        });
+    }
+
 });

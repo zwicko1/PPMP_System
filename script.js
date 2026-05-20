@@ -262,31 +262,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if(addBtn) {
         addBtn.addEventListener("click", () => {
-            // 1. Instantly disable the button to prevent double-clicks
+            const isEditing = editIndex !== null;
+            
             addBtn.disabled = true;
-            const originalText = addBtn.textContent;
-            addBtn.textContent = "⏳ Adding...";
+            addBtn.textContent = isEditing ? "⏳ Updating..." : "⏳ Adding...";
             addBtn.style.cursor = "wait";
 
-            // Helper function to unlock the button after a short cooldown
             const unlockButton = () => {
                 setTimeout(() => {
                     addBtn.disabled = false;
                     addBtn.style.cursor = "pointer";
-                    // Restore original text (unless it was changed by the edit logic)
-                    if (addBtn.textContent === "⏳ Adding...") {
+                    if (addBtn.textContent === "⏳ Adding..." || addBtn.textContent === "⏳ Updating...") {
                         addBtn.textContent = "➕ Add Project";
                     }
-                }, 1000); // 1000 milliseconds = 1 second cooldown
+                }, 1000); 
             };
 
-            // Clean the budget input by stripping out commas and currency signs before parsing
             let rawBudget = document.getElementById("budget").value;
             let cleanBudget = rawBudget.replace(/,/g, '').replace(/[^0-9.]/g, '');
-
-            // const selectedDocs = Array.from(document.querySelectorAll('.doc-checkbox:checked'))
-            //                           .map(cb => cb.value)
-            //                           .join(', ');
 
             const data = {
                 description: document.getElementById("description").value.trim(),
@@ -305,23 +298,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (!data.description || !data.quantity || !data.start || !data.end || data.budget <= 0) {
                 showToast("Please fill in all required fields (Ensure Budget is greater than 0).", true);
-                unlockButton(); // Unlock immediately if validation fails
+                unlockButton(); 
                 return;
             }
 
-            if (editIndex !== null) {
+            if (isEditing) {
                 projects[editIndex] = data;
                 editIndex = null;
-                // Don't set text here, let the unlockButton handle it 
+                showToast("Project successfully updated!", false);
             } else {
                 projects.push(data);
+                showToast("Project successfully added to the list!", false);
             }
 
             renderTable();
             document.getElementById("projectForm").reset();
-            showToast("Project successfully added to the list!", false);
             
-            // Unlock the button after a successful addition
             unlockButton();
         });
     }
@@ -779,6 +771,24 @@ document.addEventListener("DOMContentLoaded", () => {
             const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
             passwordField.setAttribute('type', type);
             this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>'; 
+        });
+    }
+
+    // BUDGET INPUT AUTO COMMA
+
+    const budgetInput = document.getElementById("budget");
+    
+    if (budgetInput) {
+        budgetInput.addEventListener("input", function() {
+            let value = this.value.replace(/[^0-9.]/g, "");
+            
+            const parts = value.split(".");
+            let intPart = parts[0];
+            let decPart = parts.length > 1 ? "." + parts.slice(1).join("") : "";
+            
+            intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            
+            this.value = intPart + decPart;
         });
     }
 });
