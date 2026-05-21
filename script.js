@@ -671,18 +671,17 @@ document.addEventListener("DOMContentLoaded", () => {
             },
             body: JSON.stringify(payload)
         })
-        // .then(response => {
-        //     // --- NEW: CATCH DEAD TOKENS ON SAVE ---
-        //     if (response.status === 401) {
-        //         btnElement.innerText = defaultText;
-        //         btnElement.disabled = false;
-        //         localStorage.clear();
-        //         alert("Session Expired: Your account was logged into from another device.");
-        //         window.location.replace("index.html");
-        //         throw new Error("Token Invalidated");
-        //     }
-        //     return response.json();
-        // })
+        .then(response => {
+            if (response.status === 401) {
+                btnElement.innerText = defaultText;
+                btnElement.disabled = false;
+                localStorage.clear();
+                alert("Session Expired: Your account was logged into from another device.");
+                window.location.replace("index.html");
+                throw new Error("Token Invalidated");
+            }
+            return response.json();
+        })
         .then(data => {
             btnElement.innerText = defaultText;
             btnElement.disabled = false;
