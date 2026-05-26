@@ -336,10 +336,10 @@ document.addEventListener("DOMContentLoaded", () => {
           <td>${p.end}</td>
           <td>${p.implementation}</td>
           <td>${p.source}</td>
-          <td>${p.budget.toLocaleString()}</td>
+          <td>${(parseFloat(p.budget) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
           <td>${p.docs}</td>
           <td>${p.remarks}</td>`;
-
+            // INEDIT KO DITO YUNG p.budget para malagyan ng decimal
       if (!isLocked) {
           rowHtml += `<td>
             <button type="button" onclick="editProject(${i})">✏️</button>
@@ -350,7 +350,9 @@ document.addEventListener("DOMContentLoaded", () => {
       row.innerHTML = rowHtml;
       tableBody.appendChild(row);
     });
-    if(totalBudgetEl) totalBudgetEl.textContent = total.toLocaleString();
+    if(totalBudgetEl) {
+        totalBudgetEl.textContent = total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
   }
 
   window.editProject = (index) => {
@@ -450,13 +452,13 @@ document.addEventListener("DOMContentLoaded", () => {
             return response.json();
         })
         .then(data => {
-            document.getElementById('uiAllocatedBudget').innerText = '₱' + (data.allocated_budget || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('uiAllocatedBudget').innerText = '₱' + parseFloat(data.allocated_budget || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
             const feedbackAlert = document.getElementById('adminFeedbackAlert');
             const feedbackText = document.getElementById('adminFeedbackText');
 
             if(data.status === 'empty') {
-                document.getElementById('uiRemainingBudget').innerText = '₱' + (data.allocated_budget || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
+                document.getElementById('uiRemainingBudget').innerText = '₱' + parseFloat(data.allocated_budget || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                 document.getElementById('uiPpmpStatus').innerText = 'Not Submitted';
                 document.getElementById('uiPpmpStatus').style.color = '#dc3545'; 
                 
