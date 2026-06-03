@@ -454,7 +454,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("modalSectorName").innerText = sectorName;
         document.getElementById("modalYearLabel").innerText = document.getElementById("yearFilter").value;
         
-        // NEW: Format the existing amount with commas when the modal opens
+        // Format the existing amount with commas when the modal opens
         let formattedAmount = currentSectorOldAmount ? currentSectorOldAmount.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2}) : "";
         document.getElementById("modalBudgetInput").value = formattedAmount;
         
@@ -725,13 +725,10 @@ document.addEventListener("DOMContentLoaded", () => {
             titleEl.style.color = "#0d6efd"; 
             subtitleEl.innerText = "Carefully review the requested items below before making a decision.";
             
-            // 1. Generate the <option> tags dynamically from our database array
-            // Filter out the Draft status (ID 1) so the Admin cannot select it!
             let optionsHtml = window.ppmpStatuses
-                .filter(s => s.id !== 1)
+                .filter(s => s.id !== 1 && s.id !== 5)
                 .map(s => `<option value="${s.id}">${s.name}</option>`).join('');
             
-            // 2. Build the new Control Panel UI
             footerEl.innerHTML = `
                 <div style="background: #f8f9fa; padding: 20px; border-radius: 6px; width: 100%; text-align: left; border: 1px solid #dee2e6;">
                     <h4 style="margin-top: 0; margin-bottom: 15px; color: #333;">Admin Decision Panel</h4>
@@ -840,7 +837,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const selectedStatus = window.ppmpStatuses.find(s => s.id == statusId);
         const statusName = selectedStatus ? selectedStatus.name : "Unknown Status";
 
-        // Smart UX: If they choose a status with "Return" or "Reject" in the name, force them to type a reason!
         if (statusName.toLowerCase().includes('return') || statusName.toLowerCase().includes('reject')) {
             if (remarks.trim() === '') {
                 alert(`You must provide remarks when setting the status to '${statusName}' so the Sector knows what to fix.`);
