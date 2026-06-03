@@ -292,7 +292,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 implementation: document.getElementById("implementation").value,
                 source: document.getElementById("source").value,
                 budget: parseFloat(cleanBudget) || 0,
-                docs: document.getElementById("docs").value.trim(),
                 remarks: document.getElementById("remarks").value.trim(),
             };
 
@@ -337,7 +336,6 @@ document.addEventListener("DOMContentLoaded", () => {
           <td>${p.implementation}</td>
           <td>${p.source}</td>
           <td>${(parseFloat(p.budget) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-          <td>${p.docs}</td>
           <td>${p.remarks}</td>`;
             // INEDIT KO DITO YUNG p.budget para malagyan ng decimal
       if (!isLocked) {
@@ -367,7 +365,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("implementation").value = p.implementation;
     document.getElementById("source").value = p.source;
     document.getElementById("budget").value = '₱ ' + p.budget.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2})
-    document.getElementById("docs").value = p.docs;
     document.getElementById("remarks").value = p.remarks;
 
     editIndex = index;
@@ -529,7 +526,6 @@ document.addEventListener("DOMContentLoaded", () => {
                         implementation: item.implementation_period,
                         source: item.source_of_funds,
                         budget: parseFloat(item.estimated_budget),
-                        docs: item.supporting_docs || '',
                         remarks: item.remarks || ''
                     });
                 });
