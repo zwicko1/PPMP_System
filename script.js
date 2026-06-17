@@ -258,10 +258,121 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const tableBody = document.querySelector("#ppmpTable tbody");
   const totalBudgetEl = document.getElementById("totalBudget");
+
+  // ==========================================
+    // MARKET SCOPING LOGIC
+    // ==========================================
+    let currentMarketScoping = null; // Holds data temporarily before clicking "Add Project"
+    const scopingModal = document.getElementById("scopingModalOverlay");
+    const openScopingBtn = document.getElementById("openScopingModalBtn");
+    const closeScopingBtn = document.getElementById("closeScopingModal");
+    const saveScopingBtn = document.getElementById("saveScopingBtn");
+    const otherCheckbox = document.getElementById("otherActivityCheck");
+    const otherTextInput = document.getElementById("otherActivityText");
+
+    // Toggle 'Other' text input
+    if (otherCheckbox) {
+        otherCheckbox.addEventListener("change", function() {
+            otherTextInput.disabled = !this.checked;
+            if(!this.checked) otherTextInput.value = "";
+        });
+    }
+
+    if (openScopingBtn) {
+        openScopingBtn.addEventListener("click", () => {
+            
+            // --- AUTOFILL LOGIC (Grab from main form, inject into modal) ---
+            document.getElementById("modal_implementing_unit").value = document.getElementById("sectorInput").value || '';
+            
+            // Combine Name and Designation nicely
+            const headName = document.getElementById("headUnit").value || '';
+            const headDesig = document.getElementById("headDesignation").value || '';
+            document.getElementById("modal_representative").value = headName + (headDesig ? " - " + headDesig : "");
+
+            document.getElementById("modal_project_name").value = document.getElementById("description").value || '';
+            document.getElementById("modal_estimated_budget").value = document.getElementById("budget").value || '';
+
+            // Use the Implementation date (or End Date as fallback) and format it nicely
+            let deliveryDate = document.getElementById("implementation").value || document.getElementById("endDate").value || '';
+            if (deliveryDate.includes('-')) {
+                const parts = deliveryDate.split('-'); // Convert YYYY-MM to MM/YYYY
+                deliveryDate = `${parts[1]}/${parts[0]}`;
+            }
+            document.getElementById("modal_delivery_date").value = deliveryDate;
+            
+            // Finally, show the modal
+            scopingModal.style.display = "flex";
+        });
+    }
+
+    if (closeScopingBtn) {
+        closeScopingBtn.addEventListener("click", () => {
+            scopingModal.style.display = "none";
+        });
+    }
+
+    // Save Data from Modal to Variable
+    if (saveScopingBtn) {
+        saveScopingBtn.addEventListener("click", () => {
+            // Gather Checkboxes
+            const selectedActivities = Array.from(document.querySelectorAll('input[name="activities"]:checked')).map(cb => cb.value);
+            
+            if (selectedActivities.length === 0 && !otherCheckbox.checked) {
+                alert("⚠️ Please select at least one Market Scoping Activity before saving.");
+                return;
+            }
+
+            if (otherCheckbox.checked && otherTextInput.value.trim() === "") {
+                alert("⚠️ Please specify the 'Other' activity in the text box.");
+                otherTextInput.focus();
+                return;
+            }
+            // ==========================================
+
+            if (otherCheckbox.checked && otherTextInput.value.trim() !== "") {
+                selectedActivities.push("Other: " + otherTextInput.value.trim());
+            }
+
+            // Save state
+            currentMarketScoping = {
+                agency_info: {
+                    procuring_entity: document.getElementById("modal_procuring_entity").value,
+                    implementing_unit: document.getElementById("modal_implementing_unit").value,
+                    representative: document.getElementById("modal_representative").value
+                },
+                project_overview: {
+                    project_name: document.getElementById("modal_project_name").value,
+                    estimated_budget: document.getElementById("modal_estimated_budget").value,
+                    delivery_date: document.getElementById("modal_delivery_date").value
+                },
+                activities: selectedActivities,
+                results: {
+                    cost: { considered: document.getElementById("param_cost_considered").value, rec: document.getElementById("param_cost_rec").value },
+                    design: { considered: document.getElementById("param_design_considered").value, rec: document.getElementById("param_design_rec").value },
+                    tech: { considered: document.getElementById("param_tech_considered").value, rec: document.getElementById("param_tech_rec").value },
+                    time: { considered: document.getElementById("param_time_considered").value, rec: document.getElementById("param_time_rec").value },
+                    storage: { considered: document.getElementById("param_storage_considered").value, rec: document.getElementById("param_storage_rec").value },
+                    risk: { considered: document.getElementById("param_risk_considered").value, rec: document.getElementById("param_risk_rec").value },
+                }
+            };
+
+            // Update UI Button to show it's completed
+            openScopingBtn.innerHTML = "✅ Scoping Saved";
+            openScopingBtn.style.backgroundColor = "#28a745";
+            
+            scopingModal.style.display = "none";
+            showToast("Market Scoping data temporarily saved. Click 'Add Project' to finalize.", false);
+        });
+    }
   const addBtn = document.getElementById("addProject");
 
     if(addBtn) {
         addBtn.addEventListener("click", () => {
+            if (!currentMarketScoping) {
+                showToast("⚠️ Please complete the Market Scoping Form before adding this project.", true);
+                return;
+            }
+
             const isEditing = editIndex !== null;
             
             addBtn.disabled = true;
@@ -293,6 +404,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 source: document.getElementById("source").value,
                 budget: parseFloat(cleanBudget) || 0,
                 remarks: document.getElementById("remarks").value.trim(),
+                market_scoping: currentMarketScoping
             };
 
             if (!data.description || !data.quantity || !data.start || !data.end || data.budget <= 0) {
@@ -312,7 +424,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
             renderTable();
             document.getElementById("projectForm").reset();
-            
+
+            // Reset scoping data and button UI for the next project
+            currentMarketScoping = null;
+            document.getElementById("scopingForm").reset();
+            const scopeBtn = document.getElementById("openScopingModalBtn");
+            if (scopeBtn) {
+                scopeBtn.innerHTML = "📊 Market Scoping (Required)";
+                scopeBtn.style.backgroundColor = "#17a2b8";
+            }
+            if(otherTextInput) otherTextInput.disabled = true;
             unlockButton();
         });
     }
@@ -366,9 +487,17 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("source").value = p.source;
     document.getElementById("budget").value = '₱ ' + p.budget.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2})
     document.getElementById("remarks").value = p.remarks;
+    currentMarketScoping = p.market_scoping || null;
+
+    const scopeBtn = document.getElementById("openScopingModalBtn");
+    if (scopeBtn) {
+        scopeBtn.innerHTML = currentMarketScoping ? "✏️ Edit Scoping Data" : "📊 Market Scoping (Required)";
+        scopeBtn.style.backgroundColor = currentMarketScoping ? "#ffc107" : "#17a2b8";
+    }
 
     editIndex = index;
     if(addBtn) addBtn.textContent = "💾 Update Project";
+
   };
 
   window.deleteProject = (index) => {
@@ -526,7 +655,8 @@ document.addEventListener("DOMContentLoaded", () => {
                         implementation: item.implementation_period,
                         source: item.source_of_funds,
                         budget: parseFloat(item.estimated_budget),
-                        remarks: item.remarks || ''
+                        remarks: item.remarks || '',
+                        market_scoping: item.market_scoping || null
                     });
                 });
 
