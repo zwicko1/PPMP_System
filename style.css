@@ -5,6 +5,8 @@ body {
   margin: 0;
 }
 
+
+
 /* Password CSS */
 .password-wrapper {
     position: relative;
@@ -204,6 +206,29 @@ footer {
   }
 }
 
+@media print {
+  /* Hide specific buttons */
+  #exportExcel,
+  #printPPMP,
+  #saveDraftBtn,
+  #submitToDatabase {
+    display: none !important;
+  }
+
+  /* You may also want to hide the entire button group containers to remove extra spacing */
+  .button-group {
+    display: none !important;
+  }
+
+  /* Optional: Hide other interactive elements that don't belong on a physical paper */
+  .user-controls,
+  #openScopingModalBtn,
+  #addProject,
+  .form-section {
+    display: none !important;
+  }
+}
+
 .user-controls {
     margin-left: auto;
     display: flex;
@@ -275,6 +300,51 @@ footer {
 
 .checkbox-row input[type="checkbox"] {
   width: auto;
+}
+
+/* Attach Picture in Market Scoping CSS */
+
+/* Custom File Upload Button Styles */
+.custom-file-upload {
+    display: block;
+    width: 100%;
+}
+
+.custom-file-upload input[type="file"] {
+    display: none; /* Hide the default ugly file input */
+}
+
+.custom-file-upload label {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px;
+    background-color: #f8f9fa;
+    border: 1.5px dashed #adb5bd;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #495057;
+    font-size: 0.85em;
+    font-weight: 500;
+    box-sizing: border-box;
+    transition: all 0.2s ease-in-out;
+    margin: 0;
+}
+
+.custom-file-upload label:hover {
+    background-color: #e9ecef;
+    border-color: #0d6efd;
+    color: #0d6efd;
+}
+
+/* Add a class for when a file is successfully selected */
+.custom-file-upload label.file-selected {
+    background-color: #e8f4ea;
+    border-color: #198754;
+    border-style: solid;
+    color: #198754;
 }
 
 /* ✅ Responsive adjustments */

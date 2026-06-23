@@ -180,7 +180,7 @@
                   <option>Foreign-Assisted Fund</option>
                 </select>
               </div>
-              <div><label>Estimated Budget (₱):</label><input type="text" id="budget" min="0" style="text-align: right;" required /></div>
+              <div><label>Estimated Budget (₱):</label><input type="text" id="budget" min="0" style="text-align: right; font-size: 15px;" required /></div>
               <div><label>Remarks:</label><input type="text" id="remarks" /></div>
             </div>
 
@@ -272,7 +272,7 @@
 
     <!-- Market Scoping Form -->
     <div id="scopingModalOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center;">
-        <div style="background: white; padding: 30px; border-radius: 8px; width: 100%; max-width: 800px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+        <div style="background: white; padding: 30px; border-radius: 8px; width: 100%; max-width: 1000px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
             
             <button type="button" id="closeScopingModal" style="position: absolute; top: 15px; right: 15px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 50%; width: 35px; height: 35px; font-size: 1.5rem; cursor: pointer; color: #dc3545; display: flex; justify-content: center; align-items: center; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.1); padding-bottom: 4px;">
                 &times;
@@ -296,30 +296,150 @@
                 </div>
 
                 <h3 style="border-bottom: 2px solid #eee; padding-bottom: 5px;">2. Project Overview</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; font-size: 0.9em;">
+                <div style="gap: 10px; margin-bottom: 20px; font-size: 0.9em;">
                     <label style="font-weight: 600;">Project Name: 
                         <input type="text" id="modal_project_name" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
                     </label>
                     <label style="font-weight: 600;">Estimated Budget: 
                         <input type="text" id="modal_estimated_budget" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
                     </label>
-                    <label style="grid-column: span 2; font-weight: 600;">Expected Date of Delivery (mm/yyyy): 
+                    <label style="font-weight: 600;">Period of Market Scoping [From (mm/yyyy) To (mm/yyyy)]:
+                        <input type="text" id="modal_period_marking_scoping" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    </label>
+                    <label style="font-weight: 600;">Expected Date of Delivery (mm/yyyy): 
                         <input type="text" id="modal_delivery_date" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="e.g., 12/2026">
                     </label>
                 </div>  
-              <h3 style="border-bottom: 2px solid #eee; padding-bottom: 5px;">3. Activities Conducted</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; font-size: 0.9em;">
-                    <label><input type="checkbox" name="activities" value="Consultations"> Consultations with suppliers/industry</label>
-                    <label><input type="checkbox" name="activities" value="Summits"> Participation in summits/conferences</label>
-                    <label><input type="checkbox" name="activities" value="Technical Reports"> Review of technical/market reports</label>
-                    <label><input type="checkbox" name="activities" value="Brochures"> Review of product/service brochures</label>
-                    <label><input type="checkbox" name="activities" value="Price Sourcing"> Price sourcing for quotations</label>
-                    <label><input type="checkbox" name="activities" value="PhilGEPS"> Use of data from PhilGEPS/agency websites</label>
-                    <label style="grid-column: span 2;">
-                        <input type="checkbox" name="activities" value="Other" id="otherActivityCheck"> Other analogous activity:
-                        <input type="text" id="otherActivityText" style="width: 60%; padding: 5px; margin-left: 10px; border: 1px solid #ccc; border-radius: 4px;" disabled>
-                    </label>
-                </div>
+
+              <!-- NUMBER 3 Start -->
+              <h3 style="margin-bottom: -20px;">3. Market Scoping Activity/Activities Conducted (Check all that apply)</h3>
+              <h5 style="border-bottom: 2px solid #eee; padding-bottom: 5px; font-weight: 200; color:#6c757d;">This confirms that market scoping activities were conducted in accordance with Section 10 of Republic Act No. 12009 and its Implementing Rules and Regulations (IRR), and considered in the Project Procurement Management Plan, consistent with the Principle of Proportionality.  </h1>
+              <table style="width: 100%; border-collapse: collapse; font-size: 0.9em; margin-bottom: 20px;">
+                  <thead style="background: #f8f9fa;">
+                      <tr>
+                          <th style="padding: 10px; border: 1px solid #dee2e6; text-align: center; width: 60px;">Select</th>
+                          <th style="padding: 10px; border: 1px solid #dee2e6; text-align: left;">Activity Conducted</th>
+                          <th style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">Attach Picture</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      <tr>
+                          <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
+                              <input type="checkbox" name="activities" value="Consultations" id="chk_consultations">
+                          </td>
+                          <td style="padding: 8px; border: 1px solid #dee2e6;">
+                              <label for="chk_consultations" style="cursor: pointer; display: block; width: 100%;">Consultations with suppliers/industry</label>
+                          </td>
+                          <td style="padding: 8px; border: 1px solid #dee2e6;">
+                              <div class="custom-file-upload">
+                                  <input type="file" id="file_consultations" accept="image/*" class="scoping-file-input">
+                                  <label for="file_consultations">
+                                      <i class="bi bi-cloud-arrow-up"></i> <span class="file-text">Attach Image</span>
+                                  </label>
+                              </div>
+                          </td>
+                      </tr>
+                      <tr>
+                          <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
+                              <input type="checkbox" name="activities" value="Summits" id="chk_summits">
+                          </td>
+                          <td style="padding: 8px; border: 1px solid #dee2e6;">
+                              <label for="chk_summits" style="cursor: pointer; display: block; width: 100%;">Participation in summits/conferences</label>
+                          </td>
+                          <td style="padding: 8px; border: 1px solid #dee2e6;">
+                              <div class="custom-file-upload">
+                                  <input type="file" id="file_summits" accept="image/*" class="scoping-file-input">
+                                  <label for="file_summits">
+                                      <i class="bi bi-cloud-arrow-up"></i> <span class="file-text">Attach Image</span>
+                                  </label>
+                              </div>
+                          </td>
+                      </tr>
+                      <tr>
+                          <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
+                              <input type="checkbox" name="activities" value="Technical Reports" id="chk_reports">
+                          </td>
+                          <td style="padding: 8px; border: 1px solid #dee2e6;">
+                              <label for="chk_reports" style="cursor: pointer; display: block; width: 100%;">Review of technical/market reports</label>
+                          </td>
+                          <td style="padding: 8px; border: 1px solid #dee2e6;">
+                              <div class="custom-file-upload">
+                                  <input type="file" id="file_reports" accept="image/*" class="scoping-file-input">
+                                  <label for="file_reports">
+                                      <i class="bi bi-cloud-arrow-up"></i> <span class="file-text">Attach Image</span>
+                                  </label>
+                              </div>
+                          </td>
+                      </tr>
+                      <tr>
+                          <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
+                              <input type="checkbox" name="activities" value="Brochures" id="chk_brochures">
+                          </td>
+                          <td style="padding: 8px; border: 1px solid #dee2e6;">
+                              <label for="chk_brochures" style="cursor: pointer; display: block; width: 100%;">Review of product/service brochures</label>
+                          </td>
+                          <td style="padding: 8px; border: 1px solid #dee2e6;">
+                              <div class="custom-file-upload">
+                                  <input type="file" id="file_brochures" accept="image/*" class="scoping-file-input">
+                                  <label for="file_brochures">
+                                      <i class="bi bi-cloud-arrow-up"></i> <span class="file-text">Attach Image</span>
+                                  </label>
+                              </div>
+                          </td>
+                      </tr>
+                      <tr>
+                          <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
+                              <input type="checkbox" name="activities" value="Price Sourcing" id="chk_pricing">
+                          </td>
+                          <td style="padding: 8px; border: 1px solid #dee2e6;">
+                              <label for="chk_pricing" style="cursor: pointer; display: block; width: 100%;">Price sourcing for quotations</label>
+                          </td>
+                          <td style="padding: 8px; border: 1px solid #dee2e6;">
+                              <div class="custom-file-upload">
+                                  <input type="file" id="file_pricing" accept="image/*" class="scoping-file-input">
+                                  <label for="file_pricing">
+                                      <i class="bi bi-cloud-arrow-up"></i> <span class="file-text">Attach Image</span>
+                                  </label>
+                              </div>
+                          </td>
+                      </tr>
+                      <tr>
+                          <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
+                              <input type="checkbox" name="activities" value="PhilGEPS" id="chk_philgeps">
+                          </td>
+                          <td style="padding: 8px; border: 1px solid #dee2e6;">
+                              <label for="chk_philgeps" style="cursor: pointer; display: block; width: 100%;">Use of data from PhilGEPS/agency websites</label>
+                          </td>
+                          <td style="padding: 8px; border: 1px solid #dee2e6;">
+                              <div class="custom-file-upload">
+                                  <input type="file" id="file_philgeps" accept="image/*" class="scoping-file-input">
+                                  <label for="file_philgeps">
+                                      <i class="bi bi-cloud-arrow-up"></i> <span class="file-text">Attach Image</span>
+                                  </label>
+                              </div>
+                          </td>
+                      </tr>
+                      <tr>
+                          <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
+                              <input type="checkbox" name="activities" value="Other" id="otherActivityCheck">
+                          </td>
+                          <td style="padding: 8px; border: 1px solid #dee2e6;">
+                              <label for="otherActivityCheck" style="cursor: pointer; display: block; margin-bottom: 5px;">Other analogous activity:</label>
+                              <input type="text" id="otherActivityText" style="width: 100%; padding: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;" disabled>
+                          </td>
+                          <td style="padding: 8px; border: 1px solid #dee2e6; vertical-align: bottom;">
+                              <div class="custom-file-upload">
+                                  <input type="file" id="file_other" accept="image/*" class="scoping-file-input">
+                                  <label for="file_other">
+                                      <i class="bi bi-cloud-arrow-up"></i> <span class="file-text">Attach Image</span>
+                                  </label>
+                              </div>
+                          </td>
+                      </tr>
+                  </tbody>
+              </table>
+
+              <!-- NUMBER 3 End - Before Notes -->
                 <div style="background-color: #e9ecef; padding: 15px; border-left: 4px solid #6c757d; margin-bottom: 25px; font-size: 0.85em; color: #495057; border-radius: 4px;">
                     <strong style="color: #212529;">Notes:</strong>
                     <ol style="margin-top: 8px; margin-bottom: 0; padding-left: 20px;">
@@ -328,13 +448,14 @@
                     </ol>
                 </div>
 
-                <h3 style="border-bottom: 2px solid #eee; padding-bottom: 5px;">4. Market Scoping Results</h3>
+                <h3 style="margin-bottom: -20px;">4. Market Scoping Results</h3>
+                <h5 style="border-bottom: 2px solid #eee; padding-bottom: 5px; font-weight: 200; color:#6c757d;">Indicate recommendations in the column provided based on the results of the market scoping activities undertaken.  These recommendations shall be considered in the development of a comprehensive and realistic PPMP, taking into account the parameters outlined under Section 10.4 of the IRR of RA 12009, as may be applicable.</h5>
                 <table style="width: 100%; border-collapse: collapse; font-size: 0.9em; margin-bottom: 20px;">
                     <thead style="background: #f8f9fa;">
                         <tr>
                             <th style="padding: 10px; border: 1px solid #dee2e6; text-align: left;">Parameters</th>
                             <th style="padding: 10px; border: 1px solid #dee2e6; width: 120px;">Considered?</th>
-                            <th style="padding: 10px; border: 1px solid #dee2e6;">Recommendations</th>
+                            <th style="padding: 10px; border: 1px solid #dee2e6;">Recommendations based on the Market Scoping</th>
                         </tr>
                     </thead>
                     <tbody>
