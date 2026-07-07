@@ -88,6 +88,9 @@
         <div style="background: #34495e; padding: 10px 20px; display: flex; gap: 15px;">
             <button id="tabBudget" style="background: #c14f3b; color: white; border: none; padding: 8px 20px; cursor: pointer; border-radius: 4px; font-weight: 600;">💰 Budget Allocations</button>
             <button id="tabPpmp" style="background: transparent; color: white; border: 1px solid #7f8c8d; padding: 8px 20px; cursor: pointer; border-radius: 4px; font-weight: 600;">📄 PPMP Approvals</button>
+            
+            <button id="tabApp" style="background: transparent; color: white; border: 1px solid #7f8c8d; padding: 8px 20px; cursor: pointer; border-radius: 4px; font-weight: 600;">📊 APP Generator</button>
+            
             <button id="tabData" style="background: transparent; color: white; border: 1px solid #7f8c8d; padding: 8px 20px; cursor: pointer; border-radius: 4px; font-weight: 600;">⚙️ Data Management</button>
         </div>
 
@@ -174,10 +177,75 @@
                 </table>
             </div>
 
+            <div id="appPanel" style="display: none; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; margin-bottom: 20px;">
+                    <div>
+                        <h3 style="margin: 0; color: #333;">Annual Procurement Plan (APP)</h3>
+                        <p style="margin: 5px 0 0 0; color: #6c757d; font-size: 0.9rem;">Compile all approved PPMPs into the final institutional plan.</p>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <label style="font-weight: 600;">Fiscal Year:</label>
+                        <input type="number" id="appYearFilter" min="2020" step="1" style="padding: 6px; border-radius: 4px; border: 1px solid #ccc; width: 100px; text-align: center;">
+                        <button onclick="generateApp()" style="background: #0d6efd; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">⚙️ Generate APP</button>
+                        
+                        <button onclick="exportAppToExcel()" style="background: #198754; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">⬇️ Export Excel</button>
+                        <button onclick="printApp()" style="background: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">🖨️ Print PDF</button>
+                    </div>
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table width="100%" style="border-collapse: collapse; font-size: 0.85em; text-align: center; min-width: 1500px;">
+                        <thead style="background-color: #f8f9fa;">
+                            <tr>
+                                <th rowspan="2" style="padding: 10px; border: 1px solid #dee2e6; width: 50px;">#</th>
+                                <th rowspan="2" style="padding: 10px; border: 1px solid #dee2e6; width: 250px;">PROJECT TITLE</th>
+                                <th rowspan="2" style="padding: 10px; border: 1px solid #dee2e6;">End-User/Unit</th>
+                                <th rowspan="2" style="padding: 10px; border: 1px solid #dee2e6;">General Description</th>
+                                <th rowspan="2" style="padding: 10px; border: 1px solid #dee2e6;">Mode of Procurement</th>
+                                <th rowspan="2" style="padding: 10px; border: 1px solid #dee2e6;">Early Procurement?</th>
+                                <th rowspan="2" style="padding: 10px; border: 1px solid #dee2e6;">Bid Evaluation Criteria</th>
+                                <th colspan="2" style="padding: 5px; border: 1px solid #dee2e6;">PROJECTED TIMELINE (MM/YYYY)</th>
+                                <th colspan="2" style="padding: 5px; border: 1px solid #dee2e6;">FUNDING DETAILS</th>
+                                <th rowspan="2" style="padding: 10px; border: 1px solid #dee2e6;">Strategy/Tools</th>
+                                <th rowspan="2" style="padding: 10px; border: 1px solid #dee2e6;">Remarks</th>
+                            </tr>
+                            <tr>
+                                <th style="padding: 5px; border: 1px solid #dee2e6;">Start</th>
+                                <th style="padding: 5px; border: 1px solid #dee2e6;">End</th>
+                                <th style="padding: 5px; border: 1px solid #dee2e6;">Source of Fund</th>
+                                <th style="padding: 5px; border: 1px solid #dee2e6; background: #e9ecef;">Estimated Budget (₱)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="appTableBody">
+                            <tr><td colspan="13" style="text-align: center; padding: 40px; color: #6c757d;">Click "Generate APP" to compile data.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <div id="dataPanel" style="display: none; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
                 <div style="border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; margin-bottom: 20px;">
                     <h3 style="margin: 0; color: #333;">PPMP Database Configuration</h3>
                     <p style="margin: 5px 0 0 0; color: #6c757d; font-size: 0.9rem;">Manage document types.</p>
+                </div>
+
+                <div style="background: #f8f9fa; padding: 20px; border: 1px solid #dee2e6; border-radius: 6px; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h4 style="margin: 0; color: #c14f3b;">🔒 Global System Locks</h4>
+                        <div>
+                            <label style="font-weight: 600; margin-right: 10px; font-size: 0.9em;">Target Fiscal Year:</label>
+                            <input type="number" id="lockYearFilter" min="2020" step="1" style="padding: 6px; border-radius: 4px; border: 1px solid #ccc; width: 100px; text-align: center;">
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px; border: 1px solid #ddd; border-radius: 4px;">
+                        <div>
+                            <strong style="font-size: 1.1em; color: #333;">PPMP Submission Portal</strong>
+                            <p style="margin: 5px 0 0 0; color: #6c757d; font-size: 0.9em;">Enable or disable the ability for Sectors to create, edit, or submit PPMPs.</p>
+                        </div>
+                        <button id="toggleSubmissionBtn" onclick="toggleGlobalSubmission()" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 150px; transition: 0.3s;">
+                            Loading...
+                        </button>
+                    </div>
                 </div>
                 
                 <div style="background: #f8f9fa; padding: 20px; border: 1px solid #dee2e6; border-radius: 6px;">
@@ -227,7 +295,8 @@
                 <thead style="background-color: #f8f9fa;">
                     <tr>
                         <th style="padding: 12px; border: 1px solid #dee2e6;">Item Description</th>
-                        <th style="padding: 12px; border: 1px solid #dee2e6;">Type</th>
+                        <th style="padding: 12px; border: 1px solid #dee2e6;">Category</th> 
+                        <th style="padding: 12px; border: 1px solid #dee2e6;">Type</th>     
                         <th style="padding: 12px; border: 1px solid #dee2e6;">Qty</th>
                         <th style="padding: 12px; border: 1px solid #dee2e6;">Mode</th>
                         <th style="padding: 12px; border: 1px solid #dee2e6;">Schedule</th>
@@ -243,6 +312,7 @@
                 </div>
         </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <script src="admin.js"></script>
 </body>
 </html>

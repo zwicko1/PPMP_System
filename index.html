@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -13,7 +13,10 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
     />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
     <style>
       .login-wrapper {
         display: flex;
@@ -26,479 +29,1046 @@
         background: white;
         padding: 40px;
         border-radius: 8px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         width: 100%;
         max-width: 400px;
         text-align: center;
       }
-      .login-card h2 { margin-top: 0; color: #c14f3b; margin-bottom: 20px; font-size: 1.5rem; }
+      .login-card h2 {
+        margin-top: 0;
+        color: #c14f3b;
+        margin-bottom: 20px;
+        font-size: 1.5rem;
+      }
       .login-card input {
-        width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: 'Poppins', sans-serif;
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
       }
       .login-card button {
-        width: 100%; margin-left: 0px; background: #c14f3b; color: white; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; font-size: 1rem;
+        width: 100%;
+        margin-left: 0px;
+        background: #c14f3b;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: "Poppins", sans-serif;
+        font-size: 1rem;
       }
-      .login-card button:hover { background: #a84534; }
+      .login-card button:hover {
+        background: #a84534;
+      }
     </style>
   </head>
   <body>
-
     <div id="loginSection" class="login-wrapper">
-        <div class="login-card">
-            <img src="assets/tup_logo.png" alt="Logo" style="width: 80px; margin-bottom: 15px;" />
-            <h2>Procurement Login</h2>
-            <input type="email" id="emailInput" placeholder="Official Email Address" required>
-            <div class="password-wrapper">
-                <input type="password" id="passwordInput" placeholder="Password" required>
-                <span id="togglePassword" class="eye-icon"><i class="bi bi-eye"></i></span>
-            </div>
-            <button id="loginBtn">Secure Login</button>
-            <p id="loginMessage" style="margin-top: 15px; font-size: 0.9em; font-weight: 500;"></p>
+      <div class="login-card">
+        <img
+          src="assets/tup_logo.png"
+          alt="Logo"
+          style="width: 80px; margin-bottom: 15px"
+        />
+        <h2>Procurement Login</h2>
+        <input
+          type="email"
+          id="emailInput"
+          placeholder="Official Email Address"
+          required
+        />
+        <div class="password-wrapper">
+          <input
+            type="password"
+            id="passwordInput"
+            placeholder="Password"
+            required
+          />
+          <span id="togglePassword" class="eye-icon"
+            ><i class="bi bi-eye"></i
+          ></span>
         </div>
+        <button id="loginBtn">Secure Login</button>
+        <p
+          id="loginMessage"
+          style="margin-top: 15px; font-size: 0.9em; font-weight: 500"
+        ></p>
+      </div>
     </div>
 
-    <div id="mainPpmpApp" style="display: none;">
-        <header class="header">
-          <img src="assets/tup_logo.png" alt="Logo" class="logo" />
-          <div class="header-content">
-            <h2>Technological University of the Philippines - Manila</h2>
-            <h3 style="margin-top: -15px;">PROJECT PROCUREMENT MANAGEMENT PLAN (PPMP)</h3>
-          </div>
-
-          <div class="user-controls">
-              <span id="welcomeUser"></span>
-              <button id="logoutBtn">🚪 Logout</button>
-          </div>
-        </header>
-
-        <div class="important-info" style="background: #f8f9fa; padding: 20px; margin: 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-          <div class="header-grid">
-              <label>Fiscal Year: <input type="number" id="fiscalYear" /></label>
-              
-              <label>Sector: 
-                <input type="text" id="sectorInput" readonly style="background: #e9ecef; cursor: not-allowed; width: 90%;" placeholder="Loading..." />
-              </label>
-
-              <label>Head of Sector: 
-                <input type="text" id="headUnit" readonly style="background: #e9ecef; cursor: not-allowed;" />
-              </label>
-              <label>Designation: 
-                <input type="text" id="headDesignation" readonly style="background: #e9ecef; cursor: not-allowed;" />
-              </label>
-              
-              <label id="ppmpTypeContainer">PPMP Type:
-                <select id="ppmpType" style="border-radius: 4px; border: 1px solid #ccc;">
-                  <option value="" disabled selected>Loading options...</option>
-                </select>
-              </label>
-          </div>
+    <div id="mainPpmpApp" style="display: none">
+      <header class="header">
+        <img src="assets/tup_logo.png" alt="Logo" class="logo" />
+        <div class="header-content">
+          <h2>Technological University of the Philippines - Manila</h2>
+          <h3 style="margin-top: -15px">
+            PROJECT PROCUREMENT MANAGEMENT PLAN (PPMP)
+          </h3>
         </div>
 
+        <div class="user-controls">
+          <span id="welcomeUser"></span>
+          <button id="logoutBtn">🚪 Logout</button>
+        </div>
+      </header>
 
-          <!-- ================= SECTOR BUDGET DASHBOARD ================= -->
-          <div id="adminFeedbackAlert" style="display: none; background-color: #fff3cd; color: #856404; padding: 15px 20px; border: 1px solid #ffeeba; border-radius: 6px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-            <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                <span style="font-size: 1.2em; margin-right: 10px;">⚠️</span>
-                <strong style="font-size: 1.1em;">PPMP Returned for Revision</strong>
-            </div>
-            <div style="padding-left: 35px; font-size: 0.95em; line-height: 1.5;">
-                <strong>Admin Remarks:</strong> <span id="adminFeedbackText" style="font-style: italic;"></span>
-            </div>
-          </div>
-                <div id="dashboardStatusPanel" style="background: #f8f9fa; padding: 20px; margin: 20px; border-radius: 8px; border-left: 5px solid #0d6efd; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                    <div>
-                        <span style="font-size: 0.9em; color: #6c757d; font-weight: 600; text-transform: uppercase;">Allocated Budget</span>
-                        <h3 id="uiAllocatedBudget" style="margin: 5px 0 0 0; color: #0d6efd; font-size: 1.5rem;">₱0.00</h3>
-                    </div>
-                    <div>
-                        <span style="font-size: 0.9em; color: #6c757d; font-weight: 600; text-transform: uppercase;">Remaining Balance</span>
-                        <h3 id="uiRemainingBudget" style="margin: 5px 0 0 0; color: #198754; font-size: 1.5rem;">₱0.00</h3>
-                    </div>
-                    <div style="text-align: right;">
-                        <span style="font-size: 0.9em; color: #6c757d; font-weight: 600; text-transform: uppercase;">PPMP Status</span>
-                        <h3 id="uiPpmpStatus" style="margin: 5px 0 10px 0; color: #dc3545; font-size: 1.5rem;">Not Submitted</h3>
-                        
-                        <button id="reviseBtn" style="display: none; background-color: #ffc107; color: #000; border: none; padding: 5px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                            ✏️ Revise PPMP
-                        </button>
-                    </div>
-                </div>
-          <!-- =========================================================== -->
+      <div
+        class="important-info"
+        style="
+          background: #f8f9fa;
+          padding: 20px;
+          margin: 20px;
+          border-radius: 8px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        "
+      >
+        <div class="header-grid">
+          <label>Fiscal Year: <input type="number" id="fiscalYear" /></label>
 
-        <section class="form-section">
-          <h3>Add Procurement Project</h3>
-          <form id="projectForm">
-            <div class="form-grid">
-              <div><label>Description:</label><input type="text" id="description" required /></div>
-              <div>
-                <label>Type:</label>
-                <select id="type">
-                  <option>Goods</option>
-                  <option>Infrastructure</option>
-                  <option>Consultancy</option>
-                </select>
-              </div>
-              <div><label>Quantity / Size:</label><input type="text" id="quantity" required /></div>
-              <div>
-                <label>Mode of Procurement:</label>
-                <select id="mode">
-                  <option>Competitive Bidding</option>
-                  <option>Limited Source Bidding</option>
-                  <option>Direct Contracting</option>
-                  <option>Small Value Procurement</option>
-                  <option>Competitive Dialogue</option>
-                  <option>Unsolicited Offer with Bid Matching</option>
-                  <option>Direct Acquisition</option>
-                  <option>Repeat Order</option>
-                  <option>Direct Sales</option>
-                  <option>Negotiated Procurement</option>
-                  <option>Direct Procurement for Science, Technology and Innovation (STI)</option>
-                </select>
-              </div>
-              <div>
-                <label>Pre-Procurement Conf.:</label>
-                <select id="preProc">
-                  <option>Yes</option>
-                  <option>No</option>
-                </select>
-              </div>
-              <div><label>Start Date:</label><input type="month" id="startDate" required /></div>
-              <div>
-                  <label>End Date:</label>
-                  <input type="month" id="endDate" required readonly style="background: #e9ecef; cursor: not-allowed;" />
-              </div>
-              <div><label>Implementation Period:</label><input type="month" id="implementation" required /></div>
-              <div>
-                <label>Source of Funds:</label>
-                <select id="source">
-                  <option>GAA - Current / Continuing</option>
-                  <option>Corporate Operating Budget</option>
-                  <option>Appropriation Ordinance</option>
-                  <option>Internally Generated Income</option>
-                  <option>Special Purpose Fund</option>
-                  <option>Trust Fund</option>
-                  <option>Foreign-Assisted Fund</option>
-                </select>
-              </div>
-              <div><label>Estimated Budget (₱):</label><input type="text" id="budget" min="0" style="text-align: right; font-size: 15px;" required /></div>
-              <div><label>Remarks:</label><input type="text" id="remarks" /></div>
-            </div>
+          <label
+            >Sector:
+            <input
+              type="text"
+              id="sectorInput"
+              readonly
+              style="background: #e9ecef; cursor: not-allowed; width: 90%"
+              placeholder="Loading..."
+            />
+          </label>
 
-            <div class="button-group" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; margin-right: -5px;">
-              <button type="button" id="openScopingModalBtn" style="background-color: #17a2b8; color: white;">📊 Market Scoping (Required)</button>
-              
-              <button type="button" id="addProject">➕ Add Project</button>
-            </div>
-          </form>
-        </section>
+          <label
+            >Head of Sector:
+            <input
+              type="text"
+              id="headUnit"
+              readonly
+              style="background: #e9ecef; cursor: not-allowed"
+            />
+          </label>
+          <label
+            >Designation:
+            <input
+              type="text"
+              id="headDesignation"
+              readonly
+              style="background: #e9ecef; cursor: not-allowed"
+            />
+          </label>
 
-        <section class="table-display">
-          <h3>Procurement Projects List</h3>
-          <div class="table-container">
-            <table id="ppmpTable">
-              <thead>
-                <tr>
-                  <th>#</th><th>Description</th><th>Type</th><th>Quantity</th><th>Mode</th>
-                  <th>Pre-Proc</th><th>Start</th><th>End</th><th>Implementation</th>
-                  <th>Source</th><th>Budget (₱)</th><th>Remarks</th><th id="actionHeader">Action</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-          <div class="total-container">
-            <strong>Total Budget: ₱<span id="totalBudget">0</span></strong>
+          <label id="ppmpTypeContainer"
+            >PPMP Type:
+            <select
+              id="ppmpType"
+              style="border-radius: 4px; border: 1px solid #ccc"
+            >
+              <option value="" disabled selected>Loading options...</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <!-- ================= SECTOR BUDGET DASHBOARD ================= -->
+      <div
+        id="adminFeedbackAlert"
+        style="
+          display: none;
+          background-color: #fff3cd;
+          color: #856404;
+          padding: 15px 20px;
+          border: 1px solid #ffeeba;
+          border-radius: 6px;
+          margin-bottom: 20px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        "
+      >
+        <div style="display: flex; align-items: center; margin-bottom: 8px">
+          <span style="font-size: 1.2em; margin-right: 10px">⚠️</span>
+          <strong style="font-size: 1.1em">PPMP Returned for Revision</strong>
+        </div>
+        <div style="padding-left: 35px; font-size: 0.95em; line-height: 1.5">
+          <strong>Admin Remarks:</strong>
+          <span id="adminFeedbackText" style="font-style: italic"></span>
+        </div>
+      </div>
+      <div
+        id="globalLockBanner"
+        style="
+          display: none;
+          background-color: #f8d7da;
+          color: #721c24;
+          padding: 15px 20px;
+          border: 1px solid #f5c6cb;
+          border-radius: 6px;
+          margin: 20px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+          text-align: center;
+        "
+      >
+        <div
+          style="
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 5px;
+          "
+        >
+          <span style="font-size: 1.3em; margin-right: 10px">🛑</span>
+          <strong style="font-size: 1.2em"
+            >SYSTEM LOCKED: PPMP Submissions are currently CLOSED.</strong
+          >
+        </div>
+        <div style="font-size: 0.95em">
+          The Administrator has locked the portal. You may view your data, but
+          adding, editing, or submitting projects is disabled.
+        </div>
+      </div>
+      <div
+        id="dashboardStatusPanel"
+        style="
+          background: #f8f9fa;
+          padding: 20px;
+          margin: 20px;
+          border-radius: 8px;
+          border-left: 5px solid #0d6efd;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        "
+      >
+        <div>
+          <span
+            style="
+              font-size: 0.9em;
+              color: #6c757d;
+              font-weight: 600;
+              text-transform: uppercase;
+            "
+            >Allocated Budget</span
+          >
+          <h3
+            id="uiAllocatedBudget"
+            style="margin: 5px 0 0 0; color: #0d6efd; font-size: 1.5rem"
+          >
+            ₱0.00
+          </h3>
+        </div>
+        <div>
+          <span
+            style="
+              font-size: 0.9em;
+              color: #6c757d;
+              font-weight: 600;
+              text-transform: uppercase;
+            "
+            >Remaining Balance</span
+          >
+          <h3
+            id="uiRemainingBudget"
+            style="margin: 5px 0 0 0; color: #198754; font-size: 1.5rem"
+          >
+            ₱0.00
+          </h3>
+        </div>
+        <div style="text-align: right">
+          <span
+            style="
+              font-size: 0.9em;
+              color: #6c757d;
+              font-weight: 600;
+              text-transform: uppercase;
+            "
+            >PPMP Status</span
+          >
+          <h3
+            id="uiPpmpStatus"
+            style="margin: 5px 0 10px 0; color: #dc3545; font-size: 1.5rem"
+          >
+            Not Submitted
+          </h3>
+
+          <button
+            id="reviseBtn"
+            style="
+              display: none;
+              background-color: #ffc107;
+              color: #000;
+              border: none;
+              padding: 5px 15px;
+              border-radius: 4px;
+              font-weight: bold;
+              cursor: pointer;
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            "
+          >
+            ✏️ Revise PPMP
+          </button>
+        </div>
+      </div>
+      <!-- =========================================================== -->
+
+      <section class="form-section">
+        <h3>Add Procurement Project</h3>
+        <form id="projectForm">
+          <div class="form-grid">
+            <div>
+              <label>Description:</label>
+              <input type="text" id="description" required />
+            </div>
             
-            <div class="signature-container">
-              <div>
-                <p>______________________________</p>
-                <p id="headUnitName">(Head of Sector)</p>
-                <p id="headUnitDesignation"></p>
-              </div>
+            <div>
+              <label>Category:</label>
+              <select id="categorySelect">
+                <option value="1">Goods</option>
+                <option value="2">Infrastructure</option>
+                <option value="3">Consultancy</option>
+              </select>
+            </div>
+            
+            <div>
+              <label>Type:</label>
+              <select id="specificTypeSelect" disabled style="background: #e9ecef;">
+                <option value="N/A">N/A</option>
+              </select>
             </div>
 
-            <div class="button-group" style="margin-top: -30px; margin-right: -5px;">
-              <button type="button" id="exportExcel">⬇️ Export to Excel / CSV</button>
-              <button type="button" id="printPPMP">🖨️ Print / Save as PDF</button>
-              <button id="saveDraftBtn" type="button" style="background-color: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 10px; display: none;">
-                📝 Save as Draft
-              </button>
-              <button type="button" id="submitToDatabase" style="background: #198754; color: white;">🚀 Submit to Database</button>
+            <div>
+              <label>Quantity / Size:</label>
+              <input type="text" id="quantity" required />
+            </div>
+            <div>
+              <label>Mode of Procurement:</label>
+              <select id="mode">
+                <option>Competitive Bidding</option>
+                <option>Limited Source Bidding</option>
+                <option>Direct Contracting</option>
+                <option>Small Value Procurement</option>
+                <option>Competitive Dialogue</option>
+                <option>Unsolicited Offer with Bid Matching</option>
+                <option>Direct Acquisition</option>
+                <option>Repeat Order</option>
+                <option>Direct Sales</option>
+                <option>Negotiated Procurement</option>
+                <option>
+                  Direct Procurement for Science, Technology and Innovation
+                  (STI)
+                </option>
+              </select>
+            </div>
+            <div>
+              <label>Pre-Procurement Conf.:</label>
+              <select id="preProc">
+                <option>Yes</option>
+                <option>No</option>
+              </select>
+            </div>
+            <div>
+              <label>Start Date:</label
+              ><input type="month" id="startDate" required />
+            </div>
+            <div>
+              <label>End Date:</label>
+              <input
+                type="month"
+                id="endDate"
+                required
+                readonly
+                style="background: #e9ecef; cursor: not-allowed"
+              />
+            </div>
+            <div>
+              <label>Implementation Period:</label
+              ><input type="month" id="implementation" required />
+            </div>
+            <div>
+              <label>Source of Funds:</label>
+              <select id="source">
+                <option>GAA - Current / Continuing</option>
+                <option>Corporate Operating Budget</option>
+                <option>Appropriation Ordinance</option>
+                <option>Internally Generated Income</option>
+                <option>Special Purpose Fund</option>
+                <option>Trust Fund</option>
+                <option>Foreign-Assisted Fund</option>
+              </select>
+            </div>
+            <div>
+              <label>Estimated Budget (₱):</label
+              ><input
+                type="text"
+                id="budget"
+                min="0"
+                style="text-align: right"
+                required
+              />
+            </div>
+            <div><label>Remarks:</label><input type="text" id="remarks" /></div>
+          </div>
+
+          <div
+            class="button-group"
+            style="
+              display: flex;
+              justify-content: flex-end;
+              gap: 10px;
+              margin-top: 10px;
+              margin-right: -5px;
+            "
+          >
+            <button
+              type="button"
+              id="openScopingModalBtn"
+              style="background-color: #17a2b8; color: white"
+            >
+              📊 Market Scoping (Required)
+            </button>
+
+            <button type="button" id="addProject">➕ Add Project</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="table-display">
+        <h3>Procurement Projects List</h3>
+        <div class="table-container">
+          <table id="ppmpTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Description</th>
+                <th>Category</th>
+                <th>Type</th>
+                <th>Quantity</th>
+                <th>Mode</th>
+                <th>Pre-Proc</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Implementation</th>
+                <th>Source</th>
+                <th>Budget (₱)</th>
+                <th>Remarks</th>
+                <th id="actionHeader">Action</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="total-container">
+          <strong>Total Budget: ₱<span id="totalBudget">0</span></strong>
+
+          <div class="signature-container">
+            <div>
+              <p>______________________________</p>
+              <p id="headUnitName">(Head of Sector)</p>
+              <p id="headUnitDesignation"></p>
             </div>
           </div>
 
-        </section>
+          <div
+            class="button-group"
+            style="margin-top: -30px; margin-right: -5px"
+          >
+            <button type="button" id="exportExcel">
+              ⬇️ Export to Excel / CSV
+            </button>
+            <button type="button" id="printPPMP">🖨️ Print / Save as PDF</button>
+            <button
+              id="saveDraftBtn"
+              type="button"
+              style="
+                background-color: #6c757d;
+                color: white;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-weight: bold;
+                margin-right: 10px;
+                display: none;
+              "
+            >
+              📝 Save as Draft
+            </button>
+            <button
+              type="button"
+              id="submitToDatabase"
+              style="background: #198754; color: white"
+            >
+              🚀 Submit to Database
+            </button>
+          </div>
+        </div>
+      </section>
 
-        <footer><p id="footerDate"></p></footer>
-    </div> <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+      <footer><p id="footerDate"></p></footer>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <script src="script.js"></script>
 
     <!-- ================= ADMIN DASHBOARD ================= -->
-    <div id="adminPpmpApp" style="display: none;">
-        <div style="text-align: right; padding: 10px 20px; background: white; border-bottom: 1px solid #ddd;">
-            <span style="margin-right: 15px; font-weight: 500; color: #c14f3b;">🛡️ Administrator Mode</span>
-            <a href="assign-budget.html" style="background: #0d6efd; color: white; text-decoration: none; padding: 8px 15px; border-radius: 4px; font-weight: 600; margin-right: 10px;">💰 Manage Budgets</a>
-            <button class="logoutBtn" style="background: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: 600;">🚪 Logout</button>
-        </div>
-        
-        <header class="header">
-            <div class="header-content">
-                <h1>TUP Manila - Procurement Command Center</h1>
-                <h2>PPMP APPROVAL DASHBOARD</h2>
-            </div>
-        </header>
+    <div id="adminPpmpApp" style="display: none">
+      <div
+        style="
+          text-align: right;
+          padding: 10px 20px;
+          background: white;
+          border-bottom: 1px solid #ddd;
+        "
+      >
+        <span style="margin-right: 15px; font-weight: 500; color: #c14f3b"
+          >🛡️ Administrator Mode</span
+        >
+        <a
+          href="assign-budget.html"
+          style="
+            background: #0d6efd;
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-weight: 600;
+            margin-right: 10px;
+          "
+          >💰 Manage Budgets</a
+        >
+        <button
+          class="logoutBtn"
+          style="
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+          "
+        >
+          🚪 Logout
+        </button>
+      </div>
 
-        <section class="table-display">
-            <table id="adminPpmpTable">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Fiscal Year</th>
-                        <th>Sector</th>
-                        <th>Total Budget (₱)</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                </tbody>
-            </table>
-        </section>
+      <header class="header">
+        <div class="header-content">
+          <h1>TUP Manila - Procurement Command Center</h1>
+          <h2>PPMP APPROVAL DASHBOARD</h2>
+        </div>
+      </header>
+
+      <section class="table-display">
+        <table id="adminPpmpTable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Fiscal Year</th>
+              <th>Sector</th>
+              <th>Total Budget (₱)</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
     </div>
 
     <!-- Notification Toast Container -->
-    <div id="toastContainer" style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none;"></div>
+    <div
+      id="toastContainer"
+      style="
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        pointer-events: none;
+      "
+    ></div>
 
     <!-- Market Scoping Form -->
-    <div id="scopingModalOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center;">
-        <div style="background: white; padding: 30px; border-radius: 8px; width: 100%; max-width: 1000px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
-            
-            <button type="button" id="closeScopingModal" style="position: absolute; top: 15px; right: 15px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 50%; width: 35px; height: 35px; font-size: 1.5rem; cursor: pointer; color: #dc3545; display: flex; justify-content: center; align-items: center; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.1); padding-bottom: 4px;">
-                &times;
-            </button>
-            
-            <h2 style="margin-top: 0; color: #c14f3b;">Market Scoping Checklist</h2>
-            <p style="color: #6c757d; font-size: 0.9em;">In accordance with Section 10 of RA 12009 and its IRR.</p>
+    <div
+      id="scopingModalOverlay"
+      style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+      "
+    >
+      <div
+        style="
+          background: white;
+          padding: 30px;
+          border-radius: 8px;
+          width: 100%;
+          max-width: 800px;
+          max-height: 90vh;
+          overflow-y: auto;
+          position: relative;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        "
+      >
+        <button
+          type="button"
+          id="closeScopingModal"
+          style="
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #dc3545;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding-bottom: 4px;
+          "
+        >
+          &times;
+        </button>
 
-            <form id="scopingForm">
-              <h3 style="border-bottom: 2px solid #eee; padding-bottom: 5px;">1. Agency Information</h3>
-                <div style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 20px; font-size: 0.9em;">
-                    <label style="font-weight: 600;">Name of Procuring Entity: 
-                        <input type="text" id="modal_procuring_entity" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" value="Technological University of the Philippines - Manila">
-                    </label>
-                    <label style="font-weight: 600;">End-User/Implementing Unit: 
-                        <input type="text" id="modal_implementing_unit" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                    </label>
-                    <label style="font-weight: 600;">Name & Designation of Representative: 
-                        <input type="text" id="modal_representative" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                    </label>
-                </div>
+        <h2 style="margin-top: 0; color: #c14f3b">Market Scoping Checklist</h2>
+        <p style="color: #6c757d; font-size: 0.9em">
+          In accordance with Section 10 of RA 12009 and its IRR.
+        </p>
 
-                <h3 style="border-bottom: 2px solid #eee; padding-bottom: 5px;">2. Project Overview</h3>
-                <div style="gap: 10px; margin-bottom: 20px; font-size: 0.9em;">
-                    <label style="font-weight: 600;">Project Name: 
-                        <input type="text" id="modal_project_name" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                    </label>
-                    <label style="font-weight: 600;">Estimated Budget: 
-                        <input type="text" id="modal_estimated_budget" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                    </label>
-                    <label style="font-weight: 600;">Period of Market Scoping [From (mm/yyyy) To (mm/yyyy)]:
-                        <input type="text" id="modal_period_marking_scoping" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                    </label>
-                    <label style="font-weight: 600;">Expected Date of Delivery (mm/yyyy): 
-                        <input type="text" id="modal_delivery_date" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="e.g., 12/2026">
-                    </label>
-                </div>  
+        <form id="scopingForm">
+          <h3 style="border-bottom: 2px solid #eee; padding-bottom: 5px">
+            1. Agency Information
+          </h3>
+          <div
+            style="
+              display: grid;
+              grid-template-columns: 1fr;
+              gap: 10px;
+              margin-bottom: 20px;
+              font-size: 0.9em;
+            "
+          >
+            <label style="font-weight: 600"
+              >Name of Procuring Entity:
+              <input
+                type="text"
+                id="modal_procuring_entity"
+                style="
+                  width: 100%;
+                  padding: 8px;
+                  border: 1px solid #ccc;
+                  border-radius: 4px;
+                "
+                value="Technological University of the Philippines - Manila"
+              />
+            </label>
+            <label style="font-weight: 600"
+              >End-User/Implementing Unit:
+              <input
+                type="text"
+                id="modal_implementing_unit"
+                style="
+                  width: 100%;
+                  padding: 8px;
+                  border: 1px solid #ccc;
+                  border-radius: 4px;
+                "
+              />
+            </label>
+            <label style="font-weight: 600"
+              >Name & Designation of Representative:
+              <input
+                type="text"
+                id="modal_representative"
+                style="
+                  width: 100%;
+                  padding: 8px;
+                  border: 1px solid #ccc;
+                  border-radius: 4px;
+                "
+              />
+            </label>
+          </div>
 
-              <!-- NUMBER 3 Start -->
-              <h3 style="margin-bottom: -20px;">3. Market Scoping Activity/Activities Conducted (Check all that apply)</h3>
-              <h5 style="border-bottom: 2px solid #eee; padding-bottom: 5px; font-weight: 200; color:#6c757d;">This confirms that market scoping activities were conducted in accordance with Section 10 of Republic Act No. 12009 and its Implementing Rules and Regulations (IRR), and considered in the Project Procurement Management Plan, consistent with the Principle of Proportionality.  </h1>
-              <table style="width: 100%; border-collapse: collapse; font-size: 0.9em; margin-bottom: 20px;">
-                  <thead style="background: #f8f9fa;">
-                      <tr>
-                          <th style="padding: 10px; border: 1px solid #dee2e6; text-align: center; width: 60px;">Select</th>
-                          <th style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">Activity Conducted</th>
-                          <th style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">Attach Picture</th>
-                      </tr>
-                  </thead>
-                  <tbody>
-                      <tr>
-                          <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
-                              <input type="checkbox" name="activities" value="Consultations" id="chk_consultations">
-                          </td>
-                          <td style="padding: 8px; border: 1px solid #dee2e6;">
-                              <label for="chk_consultations" style="cursor: pointer; display: block; width: 100%;">Consultations with suppliers/industry</label>
-                          </td>
-                          <td style="padding: 8px; border: 1px solid #dee2e6;">
-                              <div class="custom-file-upload">
-                                  <input type="file" id="file_consultations" accept="image/*" class="scoping-file-input">
-                                  <label for="file_consultations">
-                                      <i class="bi bi-cloud-arrow-up"></i> <span class="file-text">Attach Image</span>
-                                  </label>
-                              </div>
-                          </td>
-                      </tr>
-                      <tr>
-                          <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
-                              <input type="checkbox" name="activities" value="Summits" id="chk_summits">
-                          </td>
-                          <td style="padding: 8px; border: 1px solid #dee2e6;">
-                              <label for="chk_summits" style="cursor: pointer; display: block; width: 100%;">Participation in summits/conferences</label>
-                          </td>
-                          <td style="padding: 8px; border: 1px solid #dee2e6;">
-                              <div class="custom-file-upload">
-                                  <input type="file" id="file_summits" accept="image/*" class="scoping-file-input">
-                                  <label for="file_summits">
-                                      <i class="bi bi-cloud-arrow-up"></i> <span class="file-text">Attach Image</span>
-                                  </label>
-                              </div>
-                          </td>
-                      </tr>
-                      <tr>
-                          <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
-                              <input type="checkbox" name="activities" value="Technical Reports" id="chk_reports">
-                          </td>
-                          <td style="padding: 8px; border: 1px solid #dee2e6;">
-                              <label for="chk_reports" style="cursor: pointer; display: block; width: 100%;">Review of technical/market reports</label>
-                          </td>
-                          <td style="padding: 8px; border: 1px solid #dee2e6;">
-                              <div class="custom-file-upload">
-                                  <input type="file" id="file_reports" accept="image/*" class="scoping-file-input">
-                                  <label for="file_reports">
-                                      <i class="bi bi-cloud-arrow-up"></i> <span class="file-text">Attach Image</span>
-                                  </label>
-                              </div>
-                          </td>
-                      </tr>
-                      <tr>
-                          <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
-                              <input type="checkbox" name="activities" value="Brochures" id="chk_brochures">
-                          </td>
-                          <td style="padding: 8px; border: 1px solid #dee2e6;">
-                              <label for="chk_brochures" style="cursor: pointer; display: block; width: 100%;">Review of product/service brochures</label>
-                          </td>
-                          <td style="padding: 8px; border: 1px solid #dee2e6;">
-                              <div class="custom-file-upload">
-                                  <input type="file" id="file_brochures" accept="image/*" class="scoping-file-input">
-                                  <label for="file_brochures">
-                                      <i class="bi bi-cloud-arrow-up"></i> <span class="file-text">Attach Image</span>
-                                  </label>
-                              </div>
-                          </td>
-                      </tr>
-                      <tr>
-                          <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
-                              <input type="checkbox" name="activities" value="Price Sourcing" id="chk_pricing">
-                          </td>
-                          <td style="padding: 8px; border: 1px solid #dee2e6;">
-                              <label for="chk_pricing" style="cursor: pointer; display: block; width: 100%;">Price sourcing for quotations</label>
-                          </td>
-                          <td style="padding: 8px; border: 1px solid #dee2e6;">
-                              <div class="custom-file-upload">
-                                  <input type="file" id="file_pricing" accept="image/*" class="scoping-file-input">
-                                  <label for="file_pricing">
-                                      <i class="bi bi-cloud-arrow-up"></i> <span class="file-text">Attach Image</span>
-                                  </label>
-                              </div>
-                          </td>
-                      </tr>
-                      <tr>
-                          <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
-                              <input type="checkbox" name="activities" value="PhilGEPS" id="chk_philgeps">
-                          </td>
-                          <td style="padding: 8px; border: 1px solid #dee2e6;">
-                              <label for="chk_philgeps" style="cursor: pointer; display: block; width: 100%;">Use of data from PhilGEPS/agency websites</label>
-                          </td>
-                          <td style="padding: 8px; border: 1px solid #dee2e6;">
-                              <div class="custom-file-upload">
-                                  <input type="file" id="file_philgeps" accept="image/*" class="scoping-file-input">
-                                  <label for="file_philgeps">
-                                      <i class="bi bi-cloud-arrow-up"></i> <span class="file-text">Attach Image</span>
-                                  </label>
-                              </div>
-                          </td>
-                      </tr>
-                      <tr>
-                          <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
-                              <input type="checkbox" name="activities" value="Other" id="otherActivityCheck">
-                          </td>
-                          <td style="padding: 8px; border: 1px solid #dee2e6;">
-                              <label for="otherActivityCheck" style="cursor: pointer; display: block; margin-bottom: 5px;">Other analogous activity:</label>
-                              <input type="text" id="otherActivityText" style="width: 100%; padding: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;" disabled>
-                          </td>
-                          <td style="padding: 8px; border: 1px solid #dee2e6; vertical-align: bottom;">
-                              <div class="custom-file-upload">
-                                  <input type="file" id="file_other" accept="image/*" class="scoping-file-input">
-                                  <label for="file_other">
-                                      <i class="bi bi-cloud-arrow-up"></i> <span class="file-text">Attach Image</span>
-                                  </label>
-                              </div>
-                          </td>
-                      </tr>
-                  </tbody>
-              </table>
+          <h3 style="border-bottom: 2px solid #eee; padding-bottom: 5px">
+            2. Project Overview
+          </h3>
+          <div
+            style="
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 10px;
+              margin-bottom: 20px;
+              font-size: 0.9em;
+            "
+          >
+            <label style="font-weight: 600"
+              >Project Name:
+              <input
+                type="text"
+                id="modal_project_name"
+                style="
+                  width: 100%;
+                  padding: 8px;
+                  border: 1px solid #ccc;
+                  border-radius: 4px;
+                "
+              />
+            </label>
+            <label style="font-weight: 600"
+              >Estimated Budget:
+              <input
+                type="text"
+                id="modal_estimated_budget"
+                style="
+                  width: 100%;
+                  padding: 8px;
+                  border: 1px solid #ccc;
+                  border-radius: 4px;
+                "
+              />
+            </label>
+            <label style="grid-column: span 2; font-weight: 600"
+              >Expected Date of Delivery (mm/yyyy):
+              <input
+                type="text"
+                id="modal_delivery_date"
+                style="
+                  width: 100%;
+                  padding: 8px;
+                  border: 1px solid #ccc;
+                  border-radius: 4px;
+                "
+                placeholder="e.g., 12/2026"
+              />
+            </label>
+          </div>
+          <h3 style="border-bottom: 2px solid #eee; padding-bottom: 5px">
+            3. Activities Conducted
+          </h3>
 
-              <!-- NUMBER 3 End - Before Notes -->
-                <div style="background-color: #e9ecef; padding: 15px; border-left: 4px solid #6c757d; margin-bottom: 25px; font-size: 0.85em; color: #495057; border-radius: 4px;">
-                    <strong style="color: #212529;">Notes:</strong>
-                    <ol style="margin-top: 8px; margin-bottom: 0; padding-left: 20px;">
-                        <li style="margin-bottom: 5px;">The market scoping activities shall be identified and undertaken at the option of the End-User or Implementing Unit based on its needs and objectives.</li>
-                        <li>The list of supporting documents in the Documentation column is not exclusive and may include other documents that may be gathered by the End-User or Implementing Unit pertinent to the activity/ies conducted.</li>
-                    </ol>
-                </div>
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.9em; margin-bottom: 20px;">
+            <thead style="background: #f8f9fa;">
+                <tr>
+                    <th style="padding: 10px; border: 1px solid #dee2e6; width: 80px; text-align: center;">Check (√)</th>
+                    <th style="padding: 10px; border: 1px solid #dee2e6;">Activity/ies Conducted</th>
+                    <th style="padding: 10px; border: 1px solid #dee2e6;">Documentation (as may be applicable)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
+                        <input type="checkbox" name="activities" value="Consultations" />
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">Consultations with suppliers / contractors / consultants/ professional associations or industry groups</td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">
+                        <textarea id="doc_consultations" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; font-size: 0.9em; resize: vertical;" rows="3" placeholder="e.g., Highlights of consultations or meetings/ Proof of attendance/ Reports / Summaries/ Screenshots / Brochures / Publications/ Price quotations/ Canvass sheets/ Market Analysis Report"></textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
+                        <input type="checkbox" name="activities" value="Summits" />
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">Participation in summits, fora, or conferences</td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">
+                        <textarea id="doc_summits" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; font-size: 0.9em; resize: vertical;" rows="2" placeholder="e.g., Highlights of consultations or meetings/ Proof of Attendance/ Reports"></textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
+                        <input type="checkbox" name="activities" value="Technical Reports" />
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">Review of technical, financial, or market/scientific reports</td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">
+                        <textarea id="doc_reports" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; font-size: 0.9em; resize: vertical;" rows="3" placeholder="e.g., Reports / Summaries/ Screenshots / Brochures / Publications, Market Analysis Report or similar document/ Online Product Reviews"></textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
+                        <input type="checkbox" name="activities" value="Brochures" />
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">Review of product or service brochures, marketing materials, industry journals and publications or related materials</td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">
+                        <textarea id="doc_brochures" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; font-size: 0.9em; resize: vertical;" rows="2" placeholder="e.g., Summaries/ Screenshots / Brochures / Publications/ Online Product Reviews"></textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
+                        <input type="checkbox" name="activities" value="Price Sourcing" />
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">Price sourcing for quotations or cost estimates from suppliers, contractors, or consultants</td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">
+                        <textarea id="doc_pricing" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; font-size: 0.9em; resize: vertical;" rows="2" placeholder="e.g., Price quotations/ Canvass sheets/ Online Product Reviews"></textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
+                        <input type="checkbox" name="activities" value="PhilGEPS" />
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">Use of data from PhilGEPS or agency websites</td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">
+                        <textarea id="doc_philgeps" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; font-size: 0.9em; resize: vertical;" rows="2" placeholder="e.g., Reports / Summaries/ Screenshots, Price quotations/ Canvass sheets/ PhilGEPS Postings/ Online Product Reviews"></textarea>
+                    </td>
+                </tr>
+                <tr style="background: #f8f9fa;">
+                    <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
+                        <input type="checkbox" name="activities" value="Other" id="otherActivityCheck" />
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">
+                        <span style="display: block; margin-bottom: 5px;">Other analogous market scoping activity/ies undertaken:</span>
+                        <input type="text" id="otherActivityText" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;" disabled />
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">
+                        <textarea id="doc_other" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; font-size: 0.9em; resize: vertical;" rows="2" placeholder="Specify documentation for your custom activity here..." disabled></textarea>
+                    </td>
+                </tr>
+            </tbody>
+          </table>
+          <div
+            style="
+              background-color: #e9ecef;
+              padding: 15px;
+              border-left: 4px solid #6c757d;
+              margin-bottom: 25px;
+              font-size: 0.85em;
+              color: #495057;
+              border-radius: 4px;
+            "
+          >
+            <strong style="color: #212529">Notes:</strong>
+            <ol style="margin-top: 8px; margin-bottom: 0; padding-left: 20px">
+              <li style="margin-bottom: 5px">
+                The market scoping activities shall be identified and undertaken
+                at the option of the End-User or Implementing Unit based on its
+                needs and objectives.
+              </li>
+              <li>
+                The list of supporting documents in the Documentation column is
+                not exclusive and may include other documents that may be
+                gathered by the End-User or Implementing Unit pertinent to the
+                activity/ies conducted.
+              </li>
+            </ol>
+          </div>
 
-                <h3 style="margin-bottom: -20px;">4. Market Scoping Results</h3>
-                <h5 style="border-bottom: 2px solid #eee; padding-bottom: 5px; font-weight: 200; color:#6c757d;">Indicate recommendations in the column provided based on the results of the market scoping activities undertaken.  These recommendations shall be considered in the development of a comprehensive and realistic PPMP, taking into account the parameters outlined under Section 10.4 of the IRR of RA 12009, as may be applicable.</h5>
-                <table style="width: 100%; border-collapse: collapse; font-size: 0.9em; margin-bottom: 20px;">
-                    <thead style="background: #f8f9fa;">
-                        <tr>
-                            <th style="padding: 10px; border: 1px solid #dee2e6; text-align: left;">Parameters</th>
-                            <th style="padding: 10px; border: 1px solid #dee2e6; width: 120px;">Considered?</th>
-                            <th style="padding: 10px; border: 1px solid #dee2e6;">Recommendations based on the Market Scoping</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td style="padding: 8px; border: 1px solid #dee2e6;"><strong>a. Project Cost Estimate</strong><br><small>Does the cost align with market prices?</small></td>
-                            <td style="padding: 8px; border: 1px solid #dee2e6;">
-                                <select id="param_cost_considered" style="width: 100%; padding: 5px;"><option>Yes</option><option>No</option><option>N/A</option></select>
-                            </td>
-                            <td style="padding: 8px; border: 1px solid #dee2e6;"><input type="text" id="param_cost_rec" style="width: 100%; padding: 5px; box-sizing: border-box;"></td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 8px; border: 1px solid #dee2e6;"><strong>b. Project Design & Spec</strong><br><small>Do suppliers meet technical/financial reqs?</small></td>
-                            <td style="padding: 8px; border: 1px solid #dee2e6;"><select id="param_design_considered" style="width: 100%; padding: 5px;"><option>Yes</option><option>No</option><option>N/A</option></select></td>
-                            <td style="padding: 8px; border: 1px solid #dee2e6;"><input type="text" id="param_design_rec" style="width: 100%; padding: 5px; box-sizing: border-box;"></td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 8px; border: 1px solid #dee2e6;"><strong>c. Technical Criteria</strong><br><small>Does the market support the reqs?</small></td>
-                            <td style="padding: 8px; border: 1px solid #dee2e6;"><select id="param_tech_considered" style="width: 100%; padding: 5px;"><option>Yes</option><option>No</option><option>N/A</option></select></td>
-                            <td style="padding: 8px; border: 1px solid #dee2e6;"><input type="text" id="param_tech_rec" style="width: 100%; padding: 5px; box-sizing: border-box;"></td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 8px; border: 1px solid #dee2e6;"><strong>d. Delivery Lead Time</strong><br><small>Are timelines feasible?</small></td>
-                            <td style="padding: 8px; border: 1px solid #dee2e6;"><select id="param_time_considered" style="width: 100%; padding: 5px;"><option>Yes</option><option>No</option><option>N/A</option></select></td>
-                            <td style="padding: 8px; border: 1px solid #dee2e6;"><input type="text" id="param_time_rec" style="width: 100%; padding: 5px; box-sizing: border-box;"></td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 8px; border: 1px solid #dee2e6;"><strong>e. Storage & Warehousing</strong><br><small>Can storage needs be met?</small></td>
-                            <td style="padding: 8px; border: 1px solid #dee2e6;"><select id="param_storage_considered" style="width: 100%; padding: 5px;"><option>Yes</option><option>No</option><option>N/A</option></select></td>
-                            <td style="padding: 8px; border: 1px solid #dee2e6;"><input type="text" id="param_storage_rec" style="width: 100%; padding: 5px; box-sizing: border-box;"></td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 8px; border: 1px solid #dee2e6;"><strong>f. Identified Risk/s</strong><br><small>Were market risks identified?</small></td>
-                            <td style="padding: 8px; border: 1px solid #dee2e6;"><select id="param_risk_considered" style="width: 100%; padding: 5px;"><option>Yes</option><option>No</option><option>N/A</option></select></td>
-                            <td style="padding: 8px; border: 1px solid #dee2e6;"><input type="text" id="param_risk_rec" style="width: 100%; padding: 5px; box-sizing: border-box;"></td>
-                        </tr>
-                    </tbody>
-                </table>
+          <h3 style="border-bottom: 2px solid #eee; padding-bottom: 5px">
+            4. Market Scoping Results
+          </h3>
+          <table
+            style="
+              width: 100%;
+              border-collapse: collapse;
+              font-size: 0.9em;
+              margin-bottom: 20px;
+            "
+          >
+            <thead style="background: #f8f9fa">
+              <tr>
+                <th
+                  style="
+                    padding: 10px;
+                    border: 1px solid #dee2e6;
+                    text-align: left;
+                  "
+                >
+                  Parameters
+                </th>
+                <th
+                  style="padding: 10px; border: 1px solid #dee2e6; width: 120px"
+                >
+                  Considered?
+                </th>
+                <th style="padding: 10px; border: 1px solid #dee2e6">
+                  Recommendations
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding: 8px; border: 1px solid #dee2e6">
+                  <strong>a. Project Cost Estimate</strong><br /><small
+                    >Does the cost align with market prices?</small
+                  >
+                </td>
+                <td style="padding: 8px; border: 1px solid #dee2e6">
+                  <select
+                    id="param_cost_considered"
+                    style="width: 100%; padding: 5px"
+                  >
+                    <option>Yes</option>
+                    <option>No</option>
+                    <option>N/A</option>
+                  </select>
+                </td>
+                <td style="padding: 8px; border: 1px solid #dee2e6">
+                  <input
+                    type="text"
+                    id="param_cost_rec"
+                    style="width: 100%; padding: 5px; box-sizing: border-box"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 8px; border: 1px solid #dee2e6">
+                  <strong>b. Project Design & Spec</strong><br /><small
+                    >Do suppliers meet technical/financial reqs?</small
+                  >
+                </td>
+                <td style="padding: 8px; border: 1px solid #dee2e6">
+                  <select
+                    id="param_design_considered"
+                    style="width: 100%; padding: 5px"
+                  >
+                    <option>Yes</option>
+                    <option>No</option>
+                    <option>N/A</option>
+                  </select>
+                </td>
+                <td style="padding: 8px; border: 1px solid #dee2e6">
+                  <input
+                    type="text"
+                    id="param_design_rec"
+                    style="width: 100%; padding: 5px; box-sizing: border-box"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 8px; border: 1px solid #dee2e6">
+                  <strong>c. Technical Criteria</strong><br /><small
+                    >Does the market support the reqs?</small
+                  >
+                </td>
+                <td style="padding: 8px; border: 1px solid #dee2e6">
+                  <select
+                    id="param_tech_considered"
+                    style="width: 100%; padding: 5px"
+                  >
+                    <option>Yes</option>
+                    <option>No</option>
+                    <option>N/A</option>
+                  </select>
+                </td>
+                <td style="padding: 8px; border: 1px solid #dee2e6">
+                  <input
+                    type="text"
+                    id="param_tech_rec"
+                    style="width: 100%; padding: 5px; box-sizing: border-box"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 8px; border: 1px solid #dee2e6">
+                  <strong>d. Delivery Lead Time</strong><br /><small
+                    >Are timelines feasible?</small
+                  >
+                </td>
+                <td style="padding: 8px; border: 1px solid #dee2e6">
+                  <select
+                    id="param_time_considered"
+                    style="width: 100%; padding: 5px"
+                  >
+                    <option>Yes</option>
+                    <option>No</option>
+                    <option>N/A</option>
+                  </select>
+                </td>
+                <td style="padding: 8px; border: 1px solid #dee2e6">
+                  <input
+                    type="text"
+                    id="param_time_rec"
+                    style="width: 100%; padding: 5px; box-sizing: border-box"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 8px; border: 1px solid #dee2e6">
+                  <strong>e. Storage & Warehousing</strong><br /><small
+                    >Can storage needs be met?</small
+                  >
+                </td>
+                <td style="padding: 8px; border: 1px solid #dee2e6">
+                  <select
+                    id="param_storage_considered"
+                    style="width: 100%; padding: 5px"
+                  >
+                    <option>Yes</option>
+                    <option>No</option>
+                    <option>N/A</option>
+                  </select>
+                </td>
+                <td style="padding: 8px; border: 1px solid #dee2e6">
+                  <input
+                    type="text"
+                    id="param_storage_rec"
+                    style="width: 100%; padding: 5px; box-sizing: border-box"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 8px; border: 1px solid #dee2e6">
+                  <strong>f. Identified Risk/s</strong><br /><small
+                    >Were market risks identified?</small
+                  >
+                </td>
+                <td style="padding: 8px; border: 1px solid #dee2e6">
+                  <select
+                    id="param_risk_considered"
+                    style="width: 100%; padding: 5px"
+                  >
+                    <option>Yes</option>
+                    <option>No</option>
+                    <option>N/A</option>
+                  </select>
+                </td>
+                <td style="padding: 8px; border: 1px solid #dee2e6">
+                  <input
+                    type="text"
+                    id="param_risk_rec"
+                    style="width: 100%; padding: 5px; box-sizing: border-box"
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
 
-                <button type="button" id="saveScopingBtn" style="width: 100%; background: #198754; color: white; padding: 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1rem;">
-                    💾 Save Scoping Data
-                </button>
-            </form>
-        </div>
+          <button
+            type="button"
+            id="saveScopingBtn"
+            style="
+              width: 100%;
+              background: #198754;
+              color: white;
+              padding: 12px;
+              border: none;
+              border-radius: 4px;
+              font-weight: bold;
+              cursor: pointer;
+              font-size: 1rem;
+            "
+          >
+            💾 Save Scoping Data
+          </button>
+        </form>
+      </div>
     </div>
   </body>
 </html>

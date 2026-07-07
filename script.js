@@ -1,254 +1,332 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // ==========================================
+  // ALLOW "ENTER" KEY FOR USER LOGIN
+  // ==========================================
+  const passwordInput = document.getElementById("passwordInput");
+  const emailInput = document.getElementById("emailInput");
 
-    // ==========================================
-    // ALLOW "ENTER" KEY FOR USER LOGIN
-    // ==========================================
-    const passwordInput = document.getElementById('passwordInput');
-    const emailInput = document.getElementById('emailInput');
-
-    function triggerUserLogin(event) {
-        if (event.key === "Enter" || event.keyCode === 13) {
-            event.preventDefault(); 
-            document.getElementById('loginBtn').click(); 
-        }
+  function triggerUserLogin(event) {
+    if (event.key === "Enter" || event.keyCode === 13) {
+      event.preventDefault();
+      document.getElementById("loginBtn").click();
     }
+  }
 
-    if (passwordInput) passwordInput.addEventListener("keydown", triggerUserLogin);
-    if (emailInput) emailInput.addEventListener("keydown", triggerUserLogin);
+  if (passwordInput)
+    passwordInput.addEventListener("keydown", triggerUserLogin);
+  if (emailInput) emailInput.addEventListener("keydown", triggerUserLogin);
 
-    // ==========================================
-    // MAIN LOGIN BUTTON CLICK LOGIC
-    // ==========================================
-    const loginBtn = document.getElementById('loginBtn');
-    if (loginBtn) {
-        loginBtn.addEventListener('click', function(e) {
-            e.preventDefault();
+  // ==========================================
+  // MAIN LOGIN BUTTON CLICK LOGIC
+  // ==========================================
+  const loginBtn = document.getElementById("loginBtn");
+  if (loginBtn) {
+    loginBtn.addEventListener("click", function (e) {
+      e.preventDefault();
 
-            const emailInputEl = document.getElementById('emailInput');
-            const passwordInputEl = document.getElementById('passwordInput');
-            const messageDisplay = document.getElementById('loginMessage');
+      const emailInputEl = document.getElementById("emailInput");
+      const passwordInputEl = document.getElementById("passwordInput");
+      const messageDisplay = document.getElementById("loginMessage");
 
-            const email = emailInputEl.value;
-            const password = passwordInputEl.value;
+      const email = emailInputEl.value;
+      const password = passwordInputEl.value;
 
-            emailInputEl.disabled = true;
-            passwordInputEl.disabled = true;
-            loginBtn.disabled = true;
-            loginBtn.style.cursor = "wait";
+      emailInputEl.disabled = true;
+      passwordInputEl.disabled = true;
+      loginBtn.disabled = true;
+      loginBtn.style.cursor = "wait";
 
-            messageDisplay.style.color = "blue";
-            messageDisplay.innerText = "Authenticating...";
+      messageDisplay.style.color = "blue";
+      messageDisplay.innerText = "Authenticating...";
 
-            fetch('http://127.0.0.1:8000/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify({ email: email, password: password })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.token) {
-                    localStorage.setItem('auth_token', data.token);
-                    localStorage.setItem('user_data', JSON.stringify(data.user));
+      fetch("http://127.0.0.1:8000/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ email: email, password: password }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.token) {
+            localStorage.setItem("auth_token", data.token);
+            localStorage.setItem("user_data", JSON.stringify(data.user));
 
-                    fetchDynamicTimeout();
+            fetchDynamicTimeout();
 
-                    if (data.user.role_id === 1) {
-                        messageDisplay.style.color = "orange";
-                        messageDisplay.innerText = "Redirecting to Admin Portal...";
-                        window.location.href = "admin.html";
-                        return;
-                    }
-
-                    document.getElementById('loginSection').style.display = 'none';
-                    document.getElementById('mainPpmpApp').style.display = 'block';
-                    document.getElementById('welcomeUser').innerText = "Welcome, " + data.user.unit_name;
-                    loadUserData(); 
-                    fetchCurrentPpmp();
-                } else {
-                    messageDisplay.style.color = "red";
-                    messageDisplay.innerText = data.message || "Login failed.";
-                    
-                    emailInputEl.disabled = false;
-                    passwordInputEl.disabled = false;
-                    loginBtn.disabled = false;
-                    loginBtn.style.cursor = "pointer";
-                }
-            })
-            .catch(error => { 
-                console.error("Login error:", error); 
-                messageDisplay.style.color = "red";
-                messageDisplay.innerText = "Server connection failed. Check console.";
-                
-                emailInputEl.disabled = false;
-                passwordInputEl.disabled = false;
-                loginBtn.disabled = false;
-                loginBtn.style.cursor = "pointer";
-            });
-        });
-    }
-
-    // ==========================================
-    // FETCH DYNAMIC PPMP TYPES
-    // ==========================================
-    const ppmpTypeDropdown = document.getElementById("ppmpType");
-    
-    if (ppmpTypeDropdown) {
-        fetch('http://127.0.0.1:8000/api/ppmp/types', {
-            headers: { 'Accept': 'application/json' }
-        })
-        .then(response => response.json())
-        .then(types => {
-            ppmpTypeDropdown.innerHTML = ''; // Clear the "Loading..." text
-            
-            types.forEach(type => {
-                if (type.is_active === 1 || type.is_active === true || type.is_active === undefined) {
-                    const option = document.createElement("option");
-                    option.value = type.id;
-                    option.textContent = type.name;
-                    
-                    // Keep your "Indicative" default feature!
-                    if (type.id === 1 || type.id === '1') {
-                        option.selected = true;
-                    }
-                    
-                    ppmpTypeDropdown.appendChild(option);
-                }
-            });
-        })
-        .catch(error => {
-            console.error("Failed to load PPMP types:", error);
-            ppmpTypeDropdown.innerHTML = '<option value="">Error loading types</option>';
-        });
-    }
-
-    // ==========================================
-    // DYNAMIC SECURE LOGOUT & IDLE TIMER
-    // ==========================================
-    let idleTimer;
-    window.IDLE_TIMEOUT_MS = 300000;
-
-    window.fetchDynamicTimeout = function() {
-        const token = localStorage.getItem('auth_token');
-        if (token) {
-            fetch('http://127.0.0.1:8000/api/settings/timeout', {
-                headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.timeout_ms) {
-                    window.IDLE_TIMEOUT_MS = data.timeout_ms;
-                    resetIdleTimer();
-                }
-            })
-            .catch(error => console.error("Could not fetch timeout settings", error));
-        }
-    };
-
-    fetchDynamicTimeout();
-
-    // 1. The Master Logout Function
-    function performSecureLogout(isTimeout = false) {
-        const token = localStorage.getItem('auth_token');
-        
-        if (token) {
-            document.body.style.cursor = 'wait'; 
-            
-            fetch('http://127.0.0.1:8000/api/logout', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json'
-                }
-            }).finally(() => {
-                document.body.style.cursor = 'default';
-                localStorage.clear();
-                
-                if (isTimeout) {
-                    alert("Security Timeout: You have been logged out due to inactivity.");
-                }
-                window.location.replace('index.html'); 
-            });
-        } else {
-            localStorage.clear();
-            if (window.location.pathname.includes('index.html')) {
-                window.location.reload(); 
+            if (data.user.role_id === 1) {
+              messageDisplay.style.color = "red";
+              messageDisplay.innerText = "Invalid credentials"; 
+              localStorage.removeItem("auth_token");
+              localStorage.removeItem("user_data");
+              emailInputEl.disabled = false;
+              passwordInputEl.disabled = false;
+              loginBtn.disabled = false;
+              loginBtn.style.cursor = "pointer";
+              return;
             }
-        }
-    }
 
-    // 2. The Clock Reset Function
-    function resetIdleTimer() {
-        clearTimeout(idleTimer);
-        if (localStorage.getItem('auth_token')) {
-            // USING THE GLOBAL DB VALUE HERE:
-            idleTimer = setTimeout(() => performSecureLogout(true), window.IDLE_TIMEOUT_MS);
-        }
-    }
+            document.getElementById("loginSection").style.display = "none";
+            document.getElementById("mainPpmpApp").style.display = "block";
+            document.getElementById("welcomeUser").innerText =
+              "Welcome, " + data.user.unit_name;
+            loadUserData();
+            fetchCurrentPpmp();
+            window.fetchProcurementTypes();
+          } else {
+            messageDisplay.style.color = "red";
+            messageDisplay.innerText = data.message || "Login failed.";
 
-    // 3. Listen for Human Activity 
-    ['mousedown', 'keydown', 'scroll', 'touchstart'].forEach(evt => {
-        document.addEventListener(evt, resetIdleTimer);
+            emailInputEl.disabled = false;
+            passwordInputEl.disabled = false;
+            loginBtn.disabled = false;
+            loginBtn.style.cursor = "pointer";
+          }
+        })
+        .catch((error) => {
+          console.error("Login error:", error);
+          messageDisplay.style.color = "red";
+          messageDisplay.innerText = "Server connection failed. Check console.";
+
+          emailInputEl.disabled = false;
+          passwordInputEl.disabled = false;
+          loginBtn.disabled = false;
+          loginBtn.style.cursor = "pointer";
+        });
     });
+  }
 
-    // 4. Attach to the Manual Logout Button
-    document.addEventListener('click', function(e) {
-        const clickedLogout = e.target.closest('#logoutBtn');
-        if (clickedLogout) {
-            e.preventDefault();
-            performSecureLogout(false);
+  // ==========================================
+  // FETCH DYNAMIC PPMP TYPES
+  // ==========================================
+  const ppmpTypeDropdown = document.getElementById("ppmpType");
+
+  if (ppmpTypeDropdown) {
+    fetch("http://127.0.0.1:8000/api/ppmp/types", {
+      headers: { Accept: "application/json" },
+    })
+      .then((response) => response.json())
+      .then((types) => {
+        ppmpTypeDropdown.innerHTML = ""; // Clear the "Loading..." text
+
+        types.forEach((type) => {
+          if (
+            type.is_active === 1 ||
+            type.is_active === true ||
+            type.is_active === undefined
+          ) {
+            const option = document.createElement("option");
+            option.value = type.id;
+            option.textContent = type.name;
+
+            // Keep your "Indicative" default feature!
+            if (type.id === 1 || type.id === "1") {
+              option.selected = true;
+            }
+
+            ppmpTypeDropdown.appendChild(option);
+          }
+        });
+      })
+      .catch((error) => {
+        console.error("Failed to load PPMP types:", error);
+        ppmpTypeDropdown.innerHTML =
+          '<option value="">Error loading types</option>';
+      });
+  }
+
+  // ==========================================
+  // DEPENDENT DROPDOWN LOGIC (Category -> Type)
+  // ==========================================
+  const categorySelect = document.getElementById("categorySelect");
+  const specificTypeSelect = document.getElementById("specificTypeSelect");
+  let availableProcurementTypes = [];
+
+  window.triggerCategoryLogic = function() {
+      if (!categorySelect || !specificTypeSelect) return;
+
+      const isGoods = categorySelect.options[categorySelect.selectedIndex].text === "Goods";
+      specificTypeSelect.innerHTML = "";
+
+      if (isGoods) {
+          specificTypeSelect.disabled = false;
+          specificTypeSelect.style.background = "";
+          availableProcurementTypes.forEach(type => {
+              const opt = document.createElement("option");
+              opt.value = type.name;
+              opt.textContent = type.name;
+              specificTypeSelect.appendChild(opt);
+          });
+      } else {
+          specificTypeSelect.disabled = true;
+          specificTypeSelect.style.background = "#e9ecef";
+          const opt = document.createElement("option");
+          opt.value = "N/A";
+          opt.textContent = "N/A";
+          specificTypeSelect.appendChild(opt);
+      }
+  };
+
+  if (categorySelect) {
+      categorySelect.addEventListener("change", window.triggerCategoryLogic);
+  }
+
+  // Fetch the 31 types from Laravel
+  window.fetchProcurementTypes = function() {
+      const token = localStorage.getItem("auth_token");
+      if (!token) return;
+      
+      fetch("http://127.0.0.1:8000/api/ppmp/procurement-types", {
+          headers: { Accept: "application/json", Authorization: `Bearer ${token}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+          availableProcurementTypes = data;
+          window.triggerCategoryLogic(); 
+      })
+      .catch(err => console.error("Failed to load types", err));
+  };
+
+  // ==========================================
+  // DYNAMIC SECURE LOGOUT & IDLE TIMER
+  // ==========================================
+  let idleTimer;
+  window.IDLE_TIMEOUT_MS = 300000;
+
+  window.fetchDynamicTimeout = function () {
+    const token = localStorage.getItem("auth_token");
+    if (token) {
+      fetch("http://127.0.0.1:8000/api/settings/timeout", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.timeout_ms) {
+            window.IDLE_TIMEOUT_MS = data.timeout_ms;
+            resetIdleTimer();
+          }
+        })
+        .catch((error) =>
+          console.error("Could not fetch timeout settings", error),
+        );
+    }
+  };
+
+  fetchDynamicTimeout();
+
+  // 1. The Master Logout Function
+  function performSecureLogout(isTimeout = false) {
+    const token = localStorage.getItem("auth_token");
+
+    if (token) {
+      document.body.style.cursor = "wait";
+
+      fetch("http://127.0.0.1:8000/api/logout", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      }).finally(() => {
+        document.body.style.cursor = "default";
+        localStorage.clear();
+
+        if (isTimeout) {
+          alert(
+            "Security Timeout: You have been logged out due to inactivity.",
+          );
         }
-    });
+        window.location.replace("index.html");
+      });
+    } else {
+      localStorage.clear();
+      if (window.location.pathname.includes("index.html")) {
+        window.location.reload();
+      }
+    }
+  }
 
-    // 5. Start the clock immediately when the page loads
-    resetIdleTimer();
+  // 2. The Clock Reset Function
+  function resetIdleTimer() {
+    clearTimeout(idleTimer);
+    if (localStorage.getItem("auth_token")) {
+      // USING THE GLOBAL DB VALUE HERE:
+      idleTimer = setTimeout(
+        () => performSecureLogout(true),
+        window.IDLE_TIMEOUT_MS,
+      );
+    }
+  }
+
+  // 3. Listen for Human Activity
+  ["mousedown", "keydown", "scroll", "touchstart"].forEach((evt) => {
+    document.addEventListener(evt, resetIdleTimer);
+  });
+
+  // 4. Attach to the Manual Logout Button
+  document.addEventListener("click", function (e) {
+    const clickedLogout = e.target.closest("#logoutBtn");
+    if (clickedLogout) {
+      e.preventDefault();
+      performSecureLogout(false);
+    }
+  });
+
+  // 5. Start the clock immediately when the page loads
+  resetIdleTimer();
 
   const sectorInput = document.getElementById("sectorInput");
-  const headUnitInput = document.getElementById("headUnit"); 
+  const headUnitInput = document.getElementById("headUnit");
   const headDesignationInput = document.getElementById("headDesignation");
 
   function loadUserData() {
-      const userDataStr = localStorage.getItem('user_data');
-      
-      if (!userDataStr) return;
+    const userDataStr = localStorage.getItem("user_data");
 
-      const user = JSON.parse(userDataStr);
+    if (!userDataStr) return;
 
-      if (sectorInput) sectorInput.value = user.unit_name || 'N/A';
-      if (headUnitInput) headUnitInput.value = user.unit_head || '';
-      if (headDesignationInput) headDesignationInput.value = user.unit_designation || '';
+    const user = JSON.parse(userDataStr);
+
+    if (sectorInput) sectorInput.value = user.unit_name || "N/A";
+    if (headUnitInput) headUnitInput.value = user.unit_head || "";
+    if (headDesignationInput)
+      headDesignationInput.value = user.unit_designation || "";
   }
 
   const fiscalYear = document.getElementById("fiscalYear");
-  if(fiscalYear) {
-      fiscalYear.value = new Date().getFullYear(); 
+  if (fiscalYear) {
+    fiscalYear.value = new Date().getFullYear();
 
-      fiscalYear.addEventListener('change', () => {
-          fetchCurrentPpmp();
-      });
+    fiscalYear.addEventListener("change", () => {
+      fetchCurrentPpmp();
+    });
   }
 
-  const startDateInput = document.getElementById('startDate');
-  const endDateInput = document.getElementById('endDate');
+  const startDateInput = document.getElementById("startDate");
+  const endDateInput = document.getElementById("endDate");
 
   if (startDateInput && endDateInput) {
-      startDateInput.addEventListener('change', function() {
-          if (!this.value) return; 
+    startDateInput.addEventListener("change", function () {
+      if (!this.value) return;
 
-          const parts = this.value.split('-');
-          let year = parseInt(parts[0], 10);
-          let month = parseInt(parts[1], 10);
+      const parts = this.value.split("-");
+      let year = parseInt(parts[0], 10);
+      let month = parseInt(parts[1], 10);
 
-          month += 1;
+      month += 1;
 
-          if (month > 12) {
-              month = 1;
-              year += 1;
-          }
+      if (month > 12) {
+        month = 1;
+        year += 1;
+      }
 
-          const nextMonthString = month.toString().padStart(2, '0');
+      const nextMonthString = month.toString().padStart(2, "0");
 
-          endDateInput.value = `${year}-${nextMonthString}`;
-      });
+      endDateInput.value = `${year}-${nextMonthString}`;
+    });
   }
 
   const projects = [];
@@ -260,186 +338,260 @@ document.addEventListener("DOMContentLoaded", () => {
   const totalBudgetEl = document.getElementById("totalBudget");
 
   // ==========================================
-    // MARKET SCOPING LOGIC
-    // ==========================================
-    let currentMarketScoping = null; // Holds data temporarily before clicking "Add Project"
-    const scopingModal = document.getElementById("scopingModalOverlay");
-    const openScopingBtn = document.getElementById("openScopingModalBtn");
-    const closeScopingBtn = document.getElementById("closeScopingModal");
-    const saveScopingBtn = document.getElementById("saveScopingBtn");
-    const otherCheckbox = document.getElementById("otherActivityCheck");
-    const otherTextInput = document.getElementById("otherActivityText");
+  // MARKET SCOPING LOGIC
+  // ==========================================
+  let currentMarketScoping = null; // Holds data temporarily before clicking "Add Project"
+  const scopingModal = document.getElementById("scopingModalOverlay");
+  const openScopingBtn = document.getElementById("openScopingModalBtn");
+  const closeScopingBtn = document.getElementById("closeScopingModal");
+  const saveScopingBtn = document.getElementById("saveScopingBtn");
+  const otherCheckbox = document.getElementById("otherActivityCheck");
+  const otherTextInput = document.getElementById("otherActivityText");
+  const docOtherInput = document.getElementById("doc_other");
 
-    // Toggle 'Other' text input
-    if (otherCheckbox) {
-        otherCheckbox.addEventListener("change", function() {
-            otherTextInput.disabled = !this.checked;
-            if(!this.checked) otherTextInput.value = "";
-        });
-    }
+  if (otherCheckbox) {
+    otherCheckbox.addEventListener("change", function () {
+      otherTextInput.disabled = !this.checked;
+      docOtherInput.disabled = !this.checked;
+      if (!this.checked) {
+          otherTextInput.value = "";
+          docOtherInput.value = "";
+      }
+    });
+  }
 
-    if (openScopingBtn) {
-        openScopingBtn.addEventListener("click", () => {
-            
-            // --- AUTOFILL LOGIC (Grab from main form, inject into modal) ---
-            document.getElementById("modal_implementing_unit").value = document.getElementById("sectorInput").value || '';
-            
-            // Combine Name and Designation nicely
-            const headName = document.getElementById("headUnit").value || '';
-            const headDesig = document.getElementById("headDesignation").value || '';
-            document.getElementById("modal_representative").value = headName + (headDesig ? " - " + headDesig : "");
+  if (openScopingBtn) {
+    openScopingBtn.addEventListener("click", () => {
+      // --- AUTOFILL LOGIC (Grab from main form, inject into modal) ---
+      document.getElementById("modal_implementing_unit").value =
+        document.getElementById("sectorInput").value || "";
 
-            document.getElementById("modal_project_name").value = document.getElementById("description").value || '';
-            document.getElementById("modal_estimated_budget").value = document.getElementById("budget").value || '';
+      // Combine Name and Designation nicely
+      const headName = document.getElementById("headUnit").value || "";
+      const headDesig = document.getElementById("headDesignation").value || "";
+      document.getElementById("modal_representative").value =
+        headName + (headDesig ? " - " + headDesig : "");
 
-            // Use the Implementation date (or End Date as fallback) and format it nicely
-            let deliveryDate = document.getElementById("implementation").value || document.getElementById("endDate").value || '';
-            if (deliveryDate.includes('-')) {
-                const parts = deliveryDate.split('-'); // Convert YYYY-MM to MM/YYYY
-                deliveryDate = `${parts[1]}/${parts[0]}`;
-            }
-            document.getElementById("modal_delivery_date").value = deliveryDate;
-            
-            // Finally, show the modal
-            scopingModal.style.display = "flex";
-        });
-    }
+      document.getElementById("modal_project_name").value =
+        document.getElementById("description").value || "";
+      document.getElementById("modal_estimated_budget").value =
+        document.getElementById("budget").value || "";
 
-    if (closeScopingBtn) {
-        closeScopingBtn.addEventListener("click", () => {
-            scopingModal.style.display = "none";
-        });
-    }
+      // Use the Implementation date (or End Date as fallback) and format it nicely
+      let deliveryDate =
+        document.getElementById("implementation").value ||
+        document.getElementById("endDate").value ||
+        "";
+      if (deliveryDate.includes("-")) {
+        const parts = deliveryDate.split("-"); // Convert YYYY-MM to MM/YYYY
+        deliveryDate = `${parts[1]}/${parts[0]}`;
+      }
+      document.getElementById("modal_delivery_date").value = deliveryDate;
 
-    // Save Data from Modal to Variable
-    if (saveScopingBtn) {
-        saveScopingBtn.addEventListener("click", () => {
-            // Gather Checkboxes
-            const selectedActivities = Array.from(document.querySelectorAll('input[name="activities"]:checked')).map(cb => cb.value);
-            
-            if (selectedActivities.length === 0 && !otherCheckbox.checked) {
-                alert("⚠️ Please select at least one Market Scoping Activity before saving.");
-                return;
-            }
+      // Finally, show the modal
+      scopingModal.style.display = "flex";
+    });
+  }
 
-            if (otherCheckbox.checked && otherTextInput.value.trim() === "") {
-                alert("⚠️ Please specify the 'Other' activity in the text box.");
-                otherTextInput.focus();
-                return;
-            }
-            // ==========================================
+  if (closeScopingBtn) {
+    closeScopingBtn.addEventListener("click", () => {
+      scopingModal.style.display = "none";
+    });
+  }
 
-            if (otherCheckbox.checked && otherTextInput.value.trim() !== "") {
-                selectedActivities.push("Other: " + otherTextInput.value.trim());
-            }
+  // Save Data from Modal to Variable
+  if (saveScopingBtn) {
+    saveScopingBtn.addEventListener("click", () => {
+      // Gather Checkboxes AND their corresponding textareas
+      const selectedActivities = [];
+      const checkboxes = document.querySelectorAll('input[name="activities"]:checked');
+      
+      checkboxes.forEach((cb) => {
+          let activityName = cb.value;
+          let docText = "";
 
-            // Save state
-            currentMarketScoping = {
-                agency_info: {
-                    procuring_entity: document.getElementById("modal_procuring_entity").value,
-                    implementing_unit: document.getElementById("modal_implementing_unit").value,
-                    representative: document.getElementById("modal_representative").value
-                },
-                project_overview: {
-                    project_name: document.getElementById("modal_project_name").value,
-                    estimated_budget: document.getElementById("modal_estimated_budget").value,
-                    delivery_date: document.getElementById("modal_delivery_date").value
-                },
-                activities: selectedActivities,
-                results: {
-                    cost: { considered: document.getElementById("param_cost_considered").value, rec: document.getElementById("param_cost_rec").value },
-                    design: { considered: document.getElementById("param_design_considered").value, rec: document.getElementById("param_design_rec").value },
-                    tech: { considered: document.getElementById("param_tech_considered").value, rec: document.getElementById("param_tech_rec").value },
-                    time: { considered: document.getElementById("param_time_considered").value, rec: document.getElementById("param_time_rec").value },
-                    storage: { considered: document.getElementById("param_storage_considered").value, rec: document.getElementById("param_storage_rec").value },
-                    risk: { considered: document.getElementById("param_risk_considered").value, rec: document.getElementById("param_risk_rec").value },
-                }
-            };
+          // Map the checkbox value to its corresponding textarea ID
+          if (activityName === "Consultations") docText = document.getElementById("doc_consultations").value;
+          if (activityName === "Summits") docText = document.getElementById("doc_summits").value;
+          if (activityName === "Technical Reports") docText = document.getElementById("doc_reports").value;
+          if (activityName === "Brochures") docText = document.getElementById("doc_brochures").value;
+          if (activityName === "Price Sourcing") docText = document.getElementById("doc_pricing").value;
+          if (activityName === "PhilGEPS") docText = document.getElementById("doc_philgeps").value;
+          
+          if (activityName === "Other") {
+              activityName = "Other: " + otherTextInput.value.trim();
+              docText = document.getElementById("doc_other").value;
+          }
 
-            // Update UI Button to show it's completed
-            openScopingBtn.innerHTML = "✅ Scoping Saved";
-            openScopingBtn.style.backgroundColor = "#28a745";
-            
-            scopingModal.style.display = "none";
-            showToast("Market Scoping data temporarily saved. Click 'Add Project' to finalize.", false);
-        });
-    }
+          selectedActivities.push({
+              name: activityName,
+              documentation: docText
+          });
+      });
+
+      if (selectedActivities.length === 0 && !otherCheckbox.checked) {
+        alert(
+          "⚠️ Please select at least one Market Scoping Activity before saving.",
+        );
+        return;
+      }
+
+      // ==========================================
+
+      if (otherCheckbox.checked && otherTextInput.value.trim() !== "") {
+        selectedActivities.push("Other: " + otherTextInput.value.trim());
+      }
+
+      // Save state
+      currentMarketScoping = {
+        agency_info: {
+          procuring_entity: document.getElementById("modal_procuring_entity")
+            .value,
+          implementing_unit: document.getElementById("modal_implementing_unit")
+            .value,
+          representative: document.getElementById("modal_representative").value,
+        },
+        project_overview: {
+          project_name: document.getElementById("modal_project_name").value,
+          estimated_budget: document.getElementById("modal_estimated_budget")
+            .value,
+          delivery_date: document.getElementById("modal_delivery_date").value,
+        },
+        activities: selectedActivities,
+        results: {
+          cost: {
+            considered: document.getElementById("param_cost_considered").value,
+            rec: document.getElementById("param_cost_rec").value,
+          },
+          design: {
+            considered: document.getElementById("param_design_considered")
+              .value,
+            rec: document.getElementById("param_design_rec").value,
+          },
+          tech: {
+            considered: document.getElementById("param_tech_considered").value,
+            rec: document.getElementById("param_tech_rec").value,
+          },
+          time: {
+            considered: document.getElementById("param_time_considered").value,
+            rec: document.getElementById("param_time_rec").value,
+          },
+          storage: {
+            considered: document.getElementById("param_storage_considered")
+              .value,
+            rec: document.getElementById("param_storage_rec").value,
+          },
+          risk: {
+            considered: document.getElementById("param_risk_considered").value,
+            rec: document.getElementById("param_risk_rec").value,
+          },
+        },
+      };
+
+      // Update UI Button to show it's completed
+      openScopingBtn.innerHTML = "✅ Scoping Saved";
+      openScopingBtn.style.backgroundColor = "#28a745";
+
+      scopingModal.style.display = "none";
+      showToast(
+        "Market Scoping data temporarily saved. Click 'Add Project' to finalize.",
+        false,
+      );
+    });
+  }
   const addBtn = document.getElementById("addProject");
 
-    if(addBtn) {
-        addBtn.addEventListener("click", () => {
-            if (!currentMarketScoping) {
-                showToast("⚠️ Please complete the Market Scoping Form before adding this project.", true);
-                return;
-            }
+  if (addBtn) {
+    addBtn.addEventListener("click", () => {
+      if (!currentMarketScoping) {
+        showToast(
+          "⚠️ Please complete the Market Scoping Form before adding this project.",
+          true,
+        );
+        return;
+      }
 
-            const isEditing = editIndex !== null;
-            
-            addBtn.disabled = true;
-            addBtn.textContent = isEditing ? "⏳ Updating..." : "⏳ Adding...";
-            addBtn.style.cursor = "wait";
+      const isEditing = editIndex !== null;
 
-            const unlockButton = () => {
-                setTimeout(() => {
-                    addBtn.disabled = false;
-                    addBtn.style.cursor = "pointer";
-                    if (addBtn.textContent === "⏳ Adding..." || addBtn.textContent === "⏳ Updating...") {
-                        addBtn.textContent = "➕ Add Project";
-                    }
-                }, 1000); 
-            };
+      addBtn.disabled = true;
+      addBtn.textContent = isEditing ? "⏳ Updating..." : "⏳ Adding...";
+      addBtn.style.cursor = "wait";
 
-            let rawBudget = document.getElementById("budget").value;
-            let cleanBudget = rawBudget.replace(/,/g, '').replace(/[^0-9.]/g, '');
+      const unlockButton = () => {
+        setTimeout(() => {
+          addBtn.disabled = false;
+          addBtn.style.cursor = "pointer";
+          if (
+            addBtn.textContent === "⏳ Adding..." ||
+            addBtn.textContent === "⏳ Updating..."
+          ) {
+            addBtn.textContent = "➕ Add Project";
+          }
+        }, 1000);
+      };
 
-            const data = {
-                description: document.getElementById("description").value.trim(),
-                type: document.getElementById("type").value,
-                quantity: document.getElementById("quantity").value.trim(),
-                mode: document.getElementById("mode").value,
-                preProc: document.getElementById("preProc").value,
-                start: document.getElementById("startDate").value,
-                end: document.getElementById("endDate").value,
-                implementation: document.getElementById("implementation").value,
-                source: document.getElementById("source").value,
-                budget: parseFloat(cleanBudget) || 0,
-                remarks: document.getElementById("remarks").value.trim(),
-                market_scoping: currentMarketScoping
-            };
+      let rawBudget = document.getElementById("budget").value;
+      let cleanBudget = rawBudget.replace(/,/g, "").replace(/[^0-9.]/g, "");
 
-            if (!data.description || !data.quantity || !data.start || !data.end || data.budget <= 0) {
-                showToast("Please fill in all required fields (Ensure Budget is greater than 0).", true);
-                unlockButton(); 
-                return;
-            }
+      const data = {
+        description: document.getElementById("description").value.trim(),
+        category: document.getElementById("categorySelect").options[document.getElementById("categorySelect").selectedIndex].text, 
+        type: document.getElementById("specificTypeSelect").value, 
+        quantity: document.getElementById("quantity").value.trim(),
+        mode: document.getElementById("mode").value,
+        mode: document.getElementById("mode").value,
+        preProc: document.getElementById("preProc").value,
+        start: document.getElementById("startDate").value,
+        end: document.getElementById("endDate").value,
+        implementation: document.getElementById("implementation").value,
+        source: document.getElementById("source").value,
+        budget: parseFloat(cleanBudget) || 0,
+        remarks: document.getElementById("remarks").value.trim(),
+        market_scoping: currentMarketScoping,
+      };
 
-            if (isEditing) {
-                projects[editIndex] = data;
-                editIndex = null;
-                showToast("Project successfully updated!", false);
-            } else {
-                projects.push(data);
-                showToast("Project successfully added to the list!", false);
-            }
+      if (
+        !data.description ||
+        !data.quantity ||
+        !data.start ||
+        !data.end ||
+        data.budget <= 0
+      ) {
+        showToast(
+          "Please fill in all required fields (Ensure Budget is greater than 0).",
+          true,
+        );
+        unlockButton();
+        return;
+      }
 
-            renderTable();
-            document.getElementById("projectForm").reset();
+      if (isEditing) {
+        projects[editIndex] = data;
+        editIndex = null;
+        showToast("Project successfully updated!", false);
+      } else {
+        projects.push(data);
+        showToast("Project successfully added to the list!", false);
+      }
 
-            // Reset scoping data and button UI for the next project
-            currentMarketScoping = null;
-            document.getElementById("scopingForm").reset();
-            const scopeBtn = document.getElementById("openScopingModalBtn");
-            if (scopeBtn) {
-                scopeBtn.innerHTML = "📊 Market Scoping (Required)";
-                scopeBtn.style.backgroundColor = "#17a2b8";
-            }
-            if(otherTextInput) otherTextInput.disabled = true;
-            unlockButton();
-        });
-    }
+      renderTable();
+      document.getElementById("projectForm").reset();
+
+      // Reset scoping data and button UI for the next project
+      currentMarketScoping = null;
+      document.getElementById("scopingForm").reset();
+      const scopeBtn = document.getElementById("openScopingModalBtn");
+      if (scopeBtn) {
+        scopeBtn.innerHTML = "📊 Market Scoping (Required)";
+        scopeBtn.style.backgroundColor = "#17a2b8";
+      }
+      if (otherTextInput) otherTextInput.disabled = true;
+      unlockButton();
+    });
+  }
 
   function renderTable() {
-    if(!tableBody) return;
+    if (!tableBody) return;
     tableBody.innerHTML = "";
     let total = 0;
     projects.forEach((p, i) => {
@@ -448,7 +600,8 @@ document.addEventListener("DOMContentLoaded", () => {
       let rowHtml = `
           <td>${i + 1}</td>
           <td>${p.description}</td>
-          <td>${p.type}</td>
+          <td>${p.category}</td> 
+          <td>${p.type}</td>     
           <td>${p.quantity}</td>
           <td>${p.mode}</td>
           <td>${p.preProc}</td>
@@ -456,28 +609,44 @@ document.addEventListener("DOMContentLoaded", () => {
           <td>${p.end}</td>
           <td>${p.implementation}</td>
           <td>${p.source}</td>
-          <td>${(parseFloat(p.budget) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+          <td>${(parseFloat(p.budget) || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
           <td>${p.remarks}</td>`;
-            // INEDIT KO DITO YUNG p.budget para malagyan ng decimal
+      // INEDIT KO DITO YUNG p.budget para malagyan ng decimal
       if (!isLocked) {
-          rowHtml += `<td>
+        rowHtml += `<td>
             <button type="button" onclick="editProject(${i})">✏️</button>
             <button type="button" onclick="deleteProject(${i})">🗑️</button>
           </td>`;
       }
-      
+
       row.innerHTML = rowHtml;
       tableBody.appendChild(row);
     });
-    if(totalBudgetEl) {
-        totalBudgetEl.textContent = total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (totalBudgetEl) {
+      totalBudgetEl.textContent = total.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
     }
   }
 
   window.editProject = (index) => {
     const p = projects[index];
     document.getElementById("description").value = p.description;
-    document.getElementById("type").value = p.type;
+    
+    const catSelect = document.getElementById("categorySelect");
+    for (let i = 0; i < catSelect.options.length; i++) {
+        if (catSelect.options[i].text === p.category) {
+            catSelect.selectedIndex = i;
+            break;
+        }
+    }
+
+    if (typeof window.triggerCategoryLogic === "function") {
+        window.triggerCategoryLogic();
+    }
+
+    document.getElementById("specificTypeSelect").value = p.type || "N/A";
     document.getElementById("quantity").value = p.quantity;
     document.getElementById("mode").value = p.mode;
     document.getElementById("preProc").value = p.preProc;
@@ -485,19 +654,27 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("endDate").value = p.end;
     document.getElementById("implementation").value = p.implementation;
     document.getElementById("source").value = p.source;
-    document.getElementById("budget").value = '₱ ' + p.budget.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2})
+    document.getElementById("budget").value =
+      "₱ " +
+      p.budget.toLocaleString("en-US", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      });
     document.getElementById("remarks").value = p.remarks;
     currentMarketScoping = p.market_scoping || null;
 
     const scopeBtn = document.getElementById("openScopingModalBtn");
     if (scopeBtn) {
-        scopeBtn.innerHTML = currentMarketScoping ? "✏️ Edit Scoping Data" : "📊 Market Scoping (Required)";
-        scopeBtn.style.backgroundColor = currentMarketScoping ? "#ffc107" : "#17a2b8";
+      scopeBtn.innerHTML = currentMarketScoping
+        ? "✏️ Edit Scoping Data"
+        : "📊 Market Scoping (Required)";
+      scopeBtn.style.backgroundColor = currentMarketScoping
+        ? "#ffc107"
+        : "#17a2b8";
     }
 
     editIndex = index;
-    if(addBtn) addBtn.textContent = "💾 Update Project";
-
+    if (addBtn) addBtn.textContent = "💾 Update Project";
   };
 
   window.deleteProject = (index) => {
@@ -508,449 +685,497 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const exportBtn = document.getElementById("exportExcel");
-  if(exportBtn) {
-      exportBtn.onclick = () => {
-        if (projects.length === 0) return alert("No projects to export.");
-        const ws = XLSX.utils.json_to_sheet(projects);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "PPMP Projects");
-        XLSX.writeFile(wb, "PPMP_Projects.xlsx");
-      };
+  if (exportBtn) {
+    exportBtn.onclick = () => {
+      if (projects.length === 0) return alert("No projects to export.");
+      const ws = XLSX.utils.json_to_sheet(projects);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "PPMP Projects");
+      XLSX.writeFile(wb, "PPMP_Projects.xlsx");
+    };
   }
 
-    const printBtn = document.getElementById("printPPMP");
-    if(printBtn) {
-        printBtn.onclick = () => {
-            document.getElementById("headUnitName").textContent = document.getElementById("headUnit").value || "(Head of Sector)";
-            document.getElementById("headUnitDesignation").textContent = document.getElementById("headDesignation").value || "";
-            document.getElementById("footerDate").textContent = `Generated on ${new Date().toLocaleString()}`;
-            
-            const headerHTML = `
-                <div style="display:flex;align-items:center;gap:10px;">
-                    <img src="assets/tup_logo.png" width="80" height="80" style="margin-right:10px;">
-                    <div>
-                    <h2 style="margin:0;">Technological University of the Philippines - Manila</h2>
-                    <h3 style="margin:0;">Project Procurement Management Plan (PPMP)</h3>
-                    </div>
-                </div><hr>`;
+  const printBtn = document.getElementById("printPPMP");
+  if (printBtn) {
+    printBtn.onclick = () => {
+      document.getElementById("headUnitName").textContent =
+        document.getElementById("headUnit").value || "(Head of Sector)";
+      document.getElementById("headUnitDesignation").textContent =
+        document.getElementById("headDesignation").value || "";
+      document.getElementById("footerDate").textContent =
+        `Generated on ${new Date().toLocaleString()}`;
 
-            const content = document.querySelector(".table-display").outerHTML + document.querySelector("footer").outerHTML;
+      const headerHTML = `
+            <div style="display:flex;align-items:center;gap:10px;">
+                <img src="assets/tup_logo.png" width="80" height="80" style="margin-right:10px;">
+                <div>
+                <h2 style="margin:0;">Technological University of the Philippines - Manila</h2>
+                <h3 style="margin:0;">Project Procurement Management Plan (PPMP)</h3>
+                </div>
+            </div><hr>`;
 
-            const newWin = window.open("", "_blank");
-            newWin.document.write(`
-                <html><head><title>PPMP Print</title>
-                <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap" rel="stylesheet">
-                <style>
-                body { font-family:'Poppins',sans-serif;margin:20px; }
-                table { width:100%;border-collapse:collapse; }
-                th,td { border:1px solid #ccc;padding:6px;text-align:center; }
-                .signature-container { display:flex;justify-content:space-around;margin-top:40px;text-align:center; }
-                .button-group { display:none !important; }
-                </style>
-                </head><body>${headerHTML}${content}</body></html>`);
-            newWin.document.close();
-            
-            setTimeout(() => {
-                newWin.print();
-            }, 250);
-        };
-    }
+      const content =
+        document.querySelector(".table-display").outerHTML +
+        document.querySelector(".signature-container").outerHTML +
+        document.querySelector("footer").outerHTML;
 
-    // ==========================================
-    // FETCH SECTOR PPMP & BUDGET ON LOGIN
-    // ==========================================
-    window.fetchCurrentPpmp = function() {
-        const token = localStorage.getItem('auth_token');
-        if(!token) return;
-
-        const yearInput = document.getElementById("fiscalYear");
-        const selectedYear = yearInput ? yearInput.value : (new Date().getFullYear());
-
-        fetch(`http://127.0.0.1:8000/api/ppmp/current?year=${selectedYear}`, {
-            headers: { 
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => {
-            if (response.status === 401) {
-                localStorage.clear();
-                alert("Session Expired: Your account was logged into from another device.");
-                window.location.replace("index.html");
-                throw new Error("Token Invalidated");
-            }
-            return response.json();
-        })
-        .then(data => {
-            document.getElementById('uiAllocatedBudget').innerText = '₱' + parseFloat(data.allocated_budget || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-
-            const feedbackAlert = document.getElementById('adminFeedbackAlert');
-            const feedbackText = document.getElementById('adminFeedbackText');
-
-            if(data.status === 'empty') {
-                document.getElementById('uiRemainingBudget').innerText = '₱' + parseFloat(data.allocated_budget || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                document.getElementById('uiPpmpStatus').innerText = 'Not Submitted';
-                document.getElementById('uiPpmpStatus').style.color = '#dc3545'; 
-                
-                if (feedbackAlert) feedbackAlert.style.display = 'none';
-
-                isLocked = false; 
-                currentPpmpId = null;
-                projects.length = 0; 
-                
-                const actionHeader = document.getElementById('actionHeader');
-                if(actionHeader) actionHeader.style.display = ''; 
-                
-                const typeDropdown = document.getElementById('ppmpType');
-                if(typeDropdown) {
-                    typeDropdown.disabled = false;
-                    typeDropdown.style.background = ""; 
-                }
-
-                const reviseBtn = document.getElementById('reviseBtn');
-                if(reviseBtn) reviseBtn.style.display = 'none';
-                
-                const formSection = document.querySelector('.form-section');
-                if(formSection) formSection.style.display = 'block';
-
-                const submitBtn = document.getElementById("submitToDatabase");
-                if(submitBtn) {
-                    submitBtn.innerText = "🚀 Submit to Database";
-                    submitBtn.disabled = false;
-                    submitBtn.style.background = "";
-                }
-                
-                const draftBtn = document.getElementById("saveDraftBtn");
-                if (draftBtn) {
-                    draftBtn.innerText = "📝 Save as Draft";
-                    draftBtn.style.display = "inline-block";
-                }
-
-                renderTable();
-
-            } else if (data.status === 'success') {
-                document.getElementById('uiRemainingBudget').innerText = '₱' + (data.remaining_budget || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
-                document.getElementById('uiPpmpStatus').innerText = data.current_status;
-                
-                if (data.data.status_id === 4 && data.data.admin_remarks) {
-                    document.getElementById('uiPpmpStatus').style.color = '#dc3545';
-                    if (feedbackAlert && feedbackText) {
-                        feedbackText.innerText = `"${data.data.admin_remarks}"`;
-                        feedbackAlert.style.display = 'block';
-                    }
-                } else {
-                    document.getElementById('uiPpmpStatus').style.color = '#f39c12';
-                    if (feedbackAlert) feedbackAlert.style.display = 'none';
-                    if (data.data.status_id === 3) {
-                         document.getElementById('uiPpmpStatus').style.color = '#198754';
-                    }
-                }
-
-                projects.length = 0; 
-                data.data.items.forEach(item => {
-                    projects.push({
-                        description: item.description,
-                        type: item.type,
-                        quantity: item.quantity,
-                        mode: item.mode_of_procurement,
-                        preProc: item.pre_proc_conference || item.pre_procurement_conference, 
-                        start: item.start_date.substring(0, 7), 
-                        end: item.end_date.substring(0, 7),
-                        implementation: item.implementation_period,
-                        source: item.source_of_funds,
-                        budget: parseFloat(item.estimated_budget),
-                        remarks: item.remarks || '',
-                        market_scoping: item.market_scoping || null
-                    });
-                });
-
-                currentPpmpId = data.data.id;
-                
-                const actionHeader = document.getElementById('actionHeader');
-                const typeDropdown = document.getElementById("ppmpType");
-                const submitBtn = document.getElementById("submitToDatabase");
-                const draftBtn = document.getElementById("saveDraftBtn");
-                const formSection = document.querySelector('.form-section');
-                const reviseBtn = document.getElementById('reviseBtn');
-
-                // --- NEW DRAFT CHECK LOGIC ---
-                if (data.data.status_id === 1) { // 1 = DRAFT
-                    isLocked = false; 
-                    document.getElementById('uiPpmpStatus').style.color = '#6c757d'; // Gray for draft
-                    
-                    if(actionHeader) actionHeader.style.display = ''; 
-                    if(formSection) formSection.style.display = 'block';
-                    
-                    if(typeDropdown) {
-                        typeDropdown.value = data.data.ppmp_type_id; 
-                        typeDropdown.disabled = false;
-                        typeDropdown.style.background = ""; 
-                    }
-                    if(submitBtn) {
-                        submitBtn.innerText = "🚀 Submit for Approval";
-                        submitBtn.disabled = false;
-                        submitBtn.style.background = "";
-                    }
-                    if(draftBtn) {
-                        draftBtn.innerText = "💾 Update Draft";
-                        draftBtn.style.display = "inline-block";
-                    }
-                    if(reviseBtn) reviseBtn.style.display = 'none';
-
-                } else {
-                    // It is Pending, Approved, or Returned -> LOCK THE UI!
-                    isLocked = true; 
-                    if(actionHeader) actionHeader.style.display = 'none'; 
-                    if(formSection) formSection.style.display = 'none';
-                    if(draftBtn) draftBtn.style.display = 'none';
-                    if(reviseBtn) reviseBtn.style.display = 'inline-block';
-                    
-                    if(typeDropdown) {
-                        typeDropdown.value = data.data.ppmp_type_id; 
-                        typeDropdown.disabled = true;
-                        typeDropdown.style.background = "#e9ecef"; 
-                    }
-                    if(submitBtn) {
-                        submitBtn.innerText = "🔒 PPMP Submitted";
-                        submitBtn.disabled = true;
-                        submitBtn.style.background = "#6c757d";
-                    }
-                }
-
-                renderTable();
-
-                const yearDropdown = document.getElementById("fiscalYear");
-                if(yearDropdown) yearDropdown.value = data.data.fiscal_year;
-            }
-        })
-        .catch(error => {
-            console.error("Error fetching PPMP:", error);
-            document.getElementById('uiPpmpStatus').innerText = "Connection Error";
-            document.getElementById('uiPpmpStatus').style.color = "red";
-        });
+      const newWin = window.open("", "_blank");
+      newWin.document.write(`
+            <html><head><title>PPMP Print</title>
+            <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap" rel="stylesheet">
+            <style>
+              body { font-family:'Poppins',sans-serif;margin:20px; }
+              table { width:100%;border-collapse:collapse; }
+              th,td { border:1px solid #ccc;padding:6px;text-align:center; }
+              .signature-container { display:flex;justify-content:space-around;margin-top:40px;text-align:center; }
+            </style>
+            </head><body>${headerHTML}${content}</body></html>`);
+      newWin.document.close();
+      newWin.print();
     };
+  }
 
-    // ==========================================
-    // UNLOCK DASHBOARD FOR REVISIONS
-    // ==========================================
-    const reviseBtn = document.getElementById('reviseBtn');
-    if (reviseBtn) {
-        reviseBtn.addEventListener('click', () => {
+  // ==========================================
+  // FETCH SECTOR PPMP & BUDGET ON LOGIN
+  // ==========================================
+  window.fetchCurrentPpmp = function () {
+    const token = localStorage.getItem("auth_token");
+    if (!token) return;
+
+    const yearInput = document.getElementById("fiscalYear");
+    const selectedYear = yearInput ? yearInput.value : new Date().getFullYear();
+
+    fetch(`http://127.0.0.1:8000/api/settings/submission-status?year=${selectedYear}`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+    })
+      .then((res) => res.json())
+      .then((settingsData) => {
+        const isSystemOpen = settingsData.is_open; // true or false
+
+        // Show/Hide the global lock banner
+        const lockBanner = document.getElementById("globalLockBanner");
+        if (lockBanner)
+          lockBanner.style.display = isSystemOpen ? "none" : "block";
+
+        // 2. NOW FETCH THE ACTUAL PPMP DATA
+        return fetch(
+          `http://127.0.0.1:8000/api/ppmp/current?year=${selectedYear}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+            },
+          },
+        ).then((response) => {
+          if (response.status === 401) {
+            localStorage.clear();
+            alert(
+              "Session Expired: Your account was logged into from another device.",
+            );
+            window.location.replace("index.html");
+            throw new Error("Token Invalidated");
+          }
+          return response.json().then((data) => ({ data, isSystemOpen })); // Pass both down the chain
+        });
+      })
+      .then(({ data, isSystemOpen }) => {
+        document.getElementById("uiAllocatedBudget").innerText =
+          "₱" +
+          parseFloat(data.allocated_budget || 0).toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          });
+
+        const feedbackAlert = document.getElementById("adminFeedbackAlert");
+        const feedbackText = document.getElementById("adminFeedbackText");
+        const actionHeader = document.getElementById("actionHeader");
+        const formSection = document.querySelector(".form-section");
+        const submitBtn = document.getElementById("submitToDatabase");
+        const draftBtn = document.getElementById("saveDraftBtn");
+        const reviseBtn = document.getElementById("reviseBtn");
+        const typeDropdown = document.getElementById("ppmpType");
+
+        // --- GLOBAL LOCK ENFORCEMENT ---
+        // If the system is closed, force isLocked to TRUE immediately regardless of PPMP status
+        if (!isSystemOpen) {
+          isLocked = true;
+          if (actionHeader) actionHeader.style.display = "none";
+          if (formSection) formSection.style.display = "none";
+          if (draftBtn) draftBtn.style.display = "none";
+          if (reviseBtn) reviseBtn.style.display = "none";
+          if (submitBtn) submitBtn.style.display = "none";
+          if (typeDropdown) {
+            typeDropdown.disabled = true;
+            typeDropdown.style.background = "#e9ecef";
+          }
+        }
+
+        if (data.status === "empty") {
+          document.getElementById("uiRemainingBudget").innerText =
+            "₱" +
+            parseFloat(data.allocated_budget || 0).toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            });
+          document.getElementById("uiPpmpStatus").innerText = "Not Submitted";
+          document.getElementById("uiPpmpStatus").style.color = "#dc3545";
+
+          if (feedbackAlert) feedbackAlert.style.display = "none";
+
+          // ONLY apply these "open" UI elements if the system is globally open
+          if (isSystemOpen) {
             isLocked = false;
-
-            const actionHeader = document.getElementById('actionHeader');
-            if(actionHeader) actionHeader.style.display = ''; 
-
-            const typeDropdown = document.getElementById('ppmpType');
-            if(typeDropdown) {
-                typeDropdown.disabled = false;
-                typeDropdown.style.background = ""; 
+            if (actionHeader) actionHeader.style.display = "";
+            if (typeDropdown) {
+              typeDropdown.disabled = false;
+              typeDropdown.style.background = "";
             }
+            if (formSection) formSection.style.display = "block";
+            if (submitBtn) {
+              submitBtn.innerText = "🚀 Submit to Database";
+              submitBtn.disabled = false;
+              submitBtn.style.background = "";
+              submitBtn.style.display = "inline-block";
+            }
+            if (draftBtn) {
+              draftBtn.innerText = "📝 Save as Draft";
+              draftBtn.style.display = "inline-block";
+            }
+          }
 
-            const formSection = document.querySelector('.form-section');
-            if(formSection) formSection.style.display = 'block';
+          currentPpmpId = null;
+          projects.length = 0;
+          renderTable();
+        } else if (data.status === "success") {
+          document.getElementById("uiRemainingBudget").innerText =
+            "₱" +
+            (data.remaining_budget || 0).toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+            });
+          document.getElementById("uiPpmpStatus").innerText =
+            data.current_status;
 
-            const submitBtn = document.getElementById("submitToDatabase");
-            if(submitBtn) {
-                submitBtn.innerText = "🚀 Submit Revision (v2)";
+          if (data.data.status_id === 4 && data.data.admin_remarks) {
+            document.getElementById("uiPpmpStatus").style.color = "#dc3545";
+            if (feedbackAlert && feedbackText) {
+              feedbackText.innerText = `"${data.data.admin_remarks}"`;
+              feedbackAlert.style.display = "block";
+            }
+          } else {
+            document.getElementById("uiPpmpStatus").style.color = "#f39c12";
+            if (feedbackAlert) feedbackAlert.style.display = "none";
+            if (data.data.status_id === 3) {
+              document.getElementById("uiPpmpStatus").style.color = "#198754";
+            }
+          }
+
+          projects.length = 0;
+          data.data.items.forEach((item) => {
+            projects.push({
+              description: item.description,
+              category: item.category,
+              type: item.type,
+              quantity: item.quantity,
+              mode: item.mode_of_procurement,
+              preProc:
+                item.pre_proc_conference || item.pre_procurement_conference,
+              start: item.start_date.substring(0, 7),
+              end: item.end_date.substring(0, 7),
+              implementation: item.implementation_period,
+              source: item.source_of_funds,
+              budget: parseFloat(item.estimated_budget),
+              remarks: item.remarks || "",
+              market_scoping: item.market_scoping || null,
+            });
+          });
+
+          currentPpmpId = data.data.id;
+
+          const actionHeader = document.getElementById("actionHeader");
+          const typeDropdown = document.getElementById("ppmpType");
+          const submitBtn = document.getElementById("submitToDatabase");
+          const draftBtn = document.getElementById("saveDraftBtn");
+          const formSection = document.querySelector(".form-section");
+          const reviseBtn = document.getElementById("reviseBtn");
+
+          // --- NEW DRAFT CHECK LOGIC ---
+          if (data.data.status_id === 1) {
+            // 1 = DRAFT
+            document.getElementById("uiPpmpStatus").style.color = "#6c757d"; // Gray for draft
+
+            // 🛑 FIX: Only unlock the Draft UI if the global system is OPEN
+            if (isSystemOpen) {
+              isLocked = false;
+              if (actionHeader) actionHeader.style.display = "";
+              if (formSection) formSection.style.display = "block";
+
+              if (typeDropdown) {
+                typeDropdown.value = data.data.ppmp_type_id;
+                typeDropdown.disabled = false;
+                typeDropdown.style.background = "";
+              }
+              if (submitBtn) {
+                submitBtn.innerText = "🚀 Submit for Approval";
                 submitBtn.disabled = false;
                 submitBtn.style.background = "";
+              }
+              if (draftBtn) {
+                draftBtn.innerText = "💾 Update Draft";
+                draftBtn.style.display = "inline-block";
+              }
+              if (reviseBtn) reviseBtn.style.display = "none";
             }
-
-            reviseBtn.style.display = 'none';
-
-            renderTable();
-        });
-    }
-
-    // ==========================================
-    // UNIFIED SAVE / SUBMIT LOGIC
-    // ==========================================
-    function savePpmpToDatabase(targetStatusId, btnElement, defaultText) {
-        const token = localStorage.getItem('auth_token');
-        
-        if (!token) {
-            alert("Security Error: You must be logged in to submit.");
-            return;
-        }
-
-        if (projects.length === 0) {
-            return alert("Please add at least one project before saving.");
-        }
-
-        const formattedProjects = projects.map(p => ({
-            ...p,
-            estimated_budget: p.budget
-        }));
-
-        const payload = {
-            fiscal_year: document.getElementById("fiscalYear").value,
-            ppmp_type_id: document.getElementById("ppmpType").value,
-            parent_id: currentPpmpId,
-            status_id: targetStatusId, 
-            items: formattedProjects
-        };
-
-        btnElement.innerText = "Saving...";
-        btnElement.disabled = true;
-
-        fetch('http://127.0.0.1:8000/api/ppmp/submit', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'Authorization': `Bearer ${token}` 
-            },
-            body: JSON.stringify(payload)
-        })
-        .then(response => {
-            if (response.status === 401) {
-                btnElement.innerText = defaultText;
-                btnElement.disabled = false;
-                localStorage.clear();
-                alert("Session Expired: Your account was logged into from another device.");
-                window.location.replace("index.html");
-                throw new Error("Token Invalidated");
-            }
-            return response.json();
-        })
-        .then(data => {
-            btnElement.innerText = defaultText;
-            btnElement.disabled = false;
+          } else {
+            // It is Pending, Approved, or Returned -> LOCK THE UI!
+            isLocked = true;
+            if (actionHeader) actionHeader.style.display = "none";
+            if (formSection) formSection.style.display = "none";
+            if (draftBtn) draftBtn.style.display = "none";
             
-            if(data.status === 'success') {
-                alert(targetStatusId === 1 ? "Draft successfully saved!" : "PPMP Successfully Submitted for Approval!");
-                fetchCurrentPpmp();
+            // 🛑 FIX: Only show the Revise button if the global system is OPEN
+            if (isSystemOpen) {
+                if (reviseBtn) reviseBtn.style.display = "inline-block";
             } else {
-                alert("Error saving: " + (data.message || "Please check your inputs."));
+                if (reviseBtn) reviseBtn.style.display = "none";
             }
-        })
-        .catch(error => {
-            if (error.message !== "Token Invalidated") {
-                console.error("Submission Error:", error);
-                btnElement.innerText = defaultText;
-                btnElement.disabled = false;
-                alert("Failed to connect to the server.");
+
+            if (typeDropdown) {
+              typeDropdown.value = data.data.ppmp_type_id;
+              typeDropdown.disabled = true;
+              typeDropdown.style.background = "#e9ecef";
             }
-        });
-    }
-
-    // Bind the unified function to both buttons
-    const submitBtn = document.getElementById("submitToDatabase");
-    const draftBtn = document.getElementById("saveDraftBtn");
-
-    if (submitBtn) submitBtn.onclick = () => savePpmpToDatabase(2, submitBtn, "🚀 Submit to Database"); // ID 2 = Pending
-    if (draftBtn) draftBtn.onclick = () => savePpmpToDatabase(1, draftBtn, "📝 Save as Draft"); // ID 1 = Draft
-
-    // ==========================================
-    // USER ROUTE GUARD (Persist Login on Refresh)
-    // ==========================================
-    if (localStorage.getItem('auth_token')) {
-        const userDataStr = localStorage.getItem('user_data');
-        if (userDataStr) {
-            const user = JSON.parse(userDataStr);
-            
-            // If an Admin accidentally loads index.html, safely route them away
-            if (user.role_id === 1) {
-                window.location.replace("admin.html"); 
-            } else {
-                // If it's a Sector User, hide the login screen and load their dashboard!
-                const loginSec = document.getElementById('loginSection');
-                const appSec = document.getElementById('mainPpmpApp');
-                
-                if(loginSec) loginSec.style.display = 'none';
-                if(appSec) appSec.style.display = 'block';
-                
-                const welcomeObj = document.getElementById('welcomeUser');
-                if(welcomeObj) welcomeObj.innerText = "Welcome, " + (user.unit_name || "");
-                
-                loadUserData();
-                fetchCurrentPpmp();
+            if (submitBtn) {
+              submitBtn.innerText = "🔒 PPMP Submitted";
+              submitBtn.disabled = true;
+              submitBtn.style.background = "#6c757d";
             }
+          }
+
+          renderTable();
+
+          const yearDropdown = document.getElementById("fiscalYear");
+          if (yearDropdown) yearDropdown.value = data.data.fiscal_year;
         }
-    }
+      })
+      .catch((error) => {
+        console.error("Error fetching PPMP:", error);
+        document.getElementById("uiPpmpStatus").innerText = "Connection Error";
+        document.getElementById("uiPpmpStatus").style.color = "red";
+      });
+  };
 
-    function showToast(message, isError = false) {
-        const container = document.getElementById('toastContainer');
-        const toast = document.createElement('div');
-        toast.className = 'toast-notification';
-        
-        if (isError) {
-            toast.style.background = '#dc3545';
-        }
-        
-        toast.innerHTML = `<span>${isError ? '⚠️' : '✨'}</span> <span>${message}</span>`;
-        
-        container.appendChild(toast);
-        
-        setTimeout(() => {
-            toast.classList.add('show');
-        }, 10);
-        
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => {
-                toast.remove();
-            }, 300);
-        }, 4000);
-    }
+  // ==========================================
+  // UNLOCK DASHBOARD FOR REVISIONS
+  // ==========================================
+  const reviseBtn = document.getElementById("reviseBtn");
+  if (reviseBtn) {
+    reviseBtn.addEventListener("click", () => {
+      isLocked = false;
 
-    // ==========================================
-    // PASSWORD VISIBILITY TOGGLES (Bootstrap Icons)
-    // ==========================================
-    const togglePassword = document.getElementById('togglePassword');
-    const passwordField = document.getElementById('passwordInput');
+      const actionHeader = document.getElementById("actionHeader");
+      if (actionHeader) actionHeader.style.display = "";
 
-    if (togglePassword && passwordField) {
-        togglePassword.addEventListener('click', function () {
-            const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
-            passwordField.setAttribute('type', type);
-            this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>'; 
-        });
-    }
+      const typeDropdown = document.getElementById("ppmpType");
+      if (typeDropdown) {
+        typeDropdown.disabled = false;
+        typeDropdown.style.background = "";
+      }
 
-    // BUDGET INPUT AUTO COMMA
+      const formSection = document.querySelector(".form-section");
+      if (formSection) formSection.style.display = "block";
 
-    const budgetInput = document.getElementById("budget");
-    
-    if (budgetInput) {
-        budgetInput.addEventListener("input", function() {
-            let value = this.value.replace(/[^0-9.]/g, "");
-            
-            const parts = value.split(".");
-            let intPart = parts[0];
-            let decPart = parts.length > 1 ? "." + parts.slice(1).join("") : "";
-            
-            intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-            
-            this.value = intPart + decPart;
-        });
-    }
+      const submitBtn = document.getElementById("submitToDatabase");
+      if (submitBtn) {
+        submitBtn.innerText = "🚀 Submit Revision (v2)";
+        submitBtn.disabled = false;
+        submitBtn.style.background = "";
+      }
 
-    // JS for Market Scoping Picture Upload Preview
-    // Change file upload button text when an image is selected
-    document.querySelectorAll('.scoping-file-input').forEach(input => {
-        input.addEventListener('change', function(e) {
-            const label = this.nextElementSibling;
-            const textSpan = label.querySelector('.file-text');
-            const icon = label.querySelector('i');
+      reviseBtn.style.display = "none";
 
-            if (this.files && this.files.length > 0) {
-                // Truncate file name if it's too long
-                let fileName = this.files[0].name;
-                if (fileName.length > 15) {
-                    fileName = fileName.substring(0, 12) + "...";
-                }
-                
-                textSpan.textContent = fileName;
-                icon.className = "bi bi-check-circle-fill"; // Change to success icon
-                label.classList.add('file-selected'); // Apply green success styles
-            } else {
-                // Reset if user cancels
-                textSpan.textContent = "Attach Image";
-                icon.className = "bi bi-cloud-arrow-up";
-                label.classList.remove('file-selected');
-            }
-        });
+      renderTable();
     });
+  }
+
+  // ==========================================
+  // UNIFIED SAVE / SUBMIT LOGIC
+  // ==========================================
+  function savePpmpToDatabase(targetStatusId, btnElement, defaultText) {
+    const token = localStorage.getItem("auth_token");
+
+    if (!token) {
+      alert("Security Error: You must be logged in to submit.");
+      return;
+    }
+
+    if (projects.length === 0) {
+      return alert("Please add at least one project before saving.");
+    }
+
+    const formattedProjects = projects.map((p) => ({
+      ...p,
+      estimated_budget: p.budget,
+    }));
+
+    const payload = {
+      fiscal_year: document.getElementById("fiscalYear").value,
+      ppmp_type_id: document.getElementById("ppmpType").value,
+      parent_id: currentPpmpId,
+      status_id: targetStatusId,
+      items: formattedProjects,
+    };
+
+    btnElement.innerText = "Saving...";
+    btnElement.disabled = true;
+
+    fetch("http://127.0.0.1:8000/api/ppmp/submit", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    })
+      .then((response) => {
+        if (response.status === 401) {
+          btnElement.innerText = defaultText;
+          btnElement.disabled = false;
+          localStorage.clear();
+          alert(
+            "Session Expired: Your account was logged into from another device.",
+          );
+          window.location.replace("index.html");
+          throw new Error("Token Invalidated");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        btnElement.innerText = defaultText;
+        btnElement.disabled = false;
+
+        if (data.status === "success") {
+          alert(
+            targetStatusId === 1
+              ? "Draft successfully saved!"
+              : "PPMP Successfully Submitted for Approval!",
+          );
+          fetchCurrentPpmp();
+        } else {
+          alert(
+            "Error saving: " + (data.message || "Please check your inputs."),
+          );
+        }
+      })
+      .catch((error) => {
+        if (error.message !== "Token Invalidated") {
+          console.error("Submission Error:", error);
+          btnElement.innerText = defaultText;
+          btnElement.disabled = false;
+          alert("Failed to connect to the server.");
+        }
+      });
+  }
+
+  // Bind the unified function to both buttons
+  const submitBtn = document.getElementById("submitToDatabase");
+  const draftBtn = document.getElementById("saveDraftBtn");
+
+  if (submitBtn)
+    submitBtn.onclick = () =>
+      savePpmpToDatabase(2, submitBtn, "🚀 Submit to Database"); // ID 2 = Pending
+  if (draftBtn)
+    draftBtn.onclick = () =>
+      savePpmpToDatabase(1, draftBtn, "📝 Save as Draft"); // ID 1 = Draft
+
+  // ==========================================
+  // USER ROUTE GUARD (Persist Login on Refresh)
+  // ==========================================
+  if (localStorage.getItem("auth_token")) {
+    const userDataStr = localStorage.getItem("user_data");
+    if (userDataStr) {
+      const user = JSON.parse(userDataStr);
+
+      // If an Admin accidentally loads index.html, safely route them away
+      if (user.role_id === 1) {
+        window.location.replace("admin.html");
+      } else {
+        // If it's a Sector User, hide the login screen and load their dashboard!
+        const loginSec = document.getElementById("loginSection");
+        const appSec = document.getElementById("mainPpmpApp");
+
+        if (loginSec) loginSec.style.display = "none";
+        if (appSec) appSec.style.display = "block";
+
+        const welcomeObj = document.getElementById("welcomeUser");
+        if (welcomeObj)
+          welcomeObj.innerText = "Welcome, " + (user.unit_name || "");
+
+        loadUserData();
+        fetchCurrentPpmp();
+        window.fetchProcurementTypes();
+      }
+    }
+  }
+
+  function showToast(message, isError = false) {
+    const container = document.getElementById("toastContainer");
+    const toast = document.createElement("div");
+    toast.className = "toast-notification";
+
+    if (isError) {
+      toast.style.background = "#dc3545";
+    }
+
+    toast.innerHTML = `<span>${isError ? "⚠️" : "✨"}</span> <span>${message}</span>`;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.classList.add("show");
+    }, 10);
+
+    setTimeout(() => {
+      toast.classList.remove("show");
+      setTimeout(() => {
+        toast.remove();
+      }, 300);
+    }, 4000);
+  }
+
+  // ==========================================
+  // PASSWORD VISIBILITY TOGGLES (Bootstrap Icons)
+  // ==========================================
+  const togglePassword = document.getElementById("togglePassword");
+  const passwordField = document.getElementById("passwordInput");
+
+  if (togglePassword && passwordField) {
+    togglePassword.addEventListener("click", function () {
+      const type =
+        passwordField.getAttribute("type") === "password" ? "text" : "password";
+      passwordField.setAttribute("type", type);
+      this.innerHTML =
+        type === "password"
+          ? '<i class="bi bi-eye"></i>'
+          : '<i class="bi bi-eye-slash"></i>';
+    });
+  }
+
+  // BUDGET INPUT AUTO COMMA
+
+  const budgetInput = document.getElementById("budget");
+
+  if (budgetInput) {
+    budgetInput.addEventListener("input", function () {
+      let value = this.value.replace(/[^0-9.]/g, "");
+
+      const parts = value.split(".");
+      let intPart = parts[0];
+      let decPart = parts.length > 1 ? "." + parts.slice(1).join("") : "";
+
+      intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+      this.value = intPart + decPart;
+    });
+  }
 });
