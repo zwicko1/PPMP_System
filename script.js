@@ -695,45 +695,43 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-  const printBtn = document.getElementById("printPPMP");
-  if (printBtn) {
-    printBtn.onclick = () => {
-      document.getElementById("headUnitName").textContent =
-        document.getElementById("headUnit").value || "(Head of Sector)";
-      document.getElementById("headUnitDesignation").textContent =
-        document.getElementById("headDesignation").value || "";
-      document.getElementById("footerDate").textContent =
-        `Generated on ${new Date().toLocaleString()}`;
+     const printBtn = document.getElementById("printPPMP");
+    if(printBtn) {
+        printBtn.onclick = () => {
+            document.getElementById("headUnitName").textContent = document.getElementById("headUnit").value || "(Head of Sector)";
+            document.getElementById("headUnitDesignation").textContent = document.getElementById("headDesignation").value || "";
+            document.getElementById("footerDate").textContent = `Generated on ${new Date().toLocaleString()}`;
+            
+            const headerHTML = `
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <img src="assets/tup_logo.png" width="80" height="80" style="margin-right:10px;">
+                    <div>
+                    <h2 style="margin:0;">Technological University of the Philippines - Manila</h2>
+                    <h3 style="margin:0;">Project Procurement Management Plan (PPMP)</h3>
+                    </div>
+                </div><hr>`;
 
-      const headerHTML = `
-            <div style="display:flex;align-items:center;gap:10px;">
-                <img src="assets/tup_logo.png" width="80" height="80" style="margin-right:10px;">
-                <div>
-                <h2 style="margin:0;">Technological University of the Philippines - Manila</h2>
-                <h3 style="margin:0;">Project Procurement Management Plan (PPMP)</h3>
-                </div>
-            </div><hr>`;
+            const content = document.querySelector(".table-display").outerHTML + document.querySelector("footer").outerHTML;
 
-      const content =
-        document.querySelector(".table-display").outerHTML +
-        document.querySelector(".signature-container").outerHTML +
-        document.querySelector("footer").outerHTML;
-
-      const newWin = window.open("", "_blank");
-      newWin.document.write(`
-            <html><head><title>PPMP Print</title>
-            <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap" rel="stylesheet">
-            <style>
-              body { font-family:'Poppins',sans-serif;margin:20px; }
-              table { width:100%;border-collapse:collapse; }
-              th,td { border:1px solid #ccc;padding:6px;text-align:center; }
-              .signature-container { display:flex;justify-content:space-around;margin-top:40px;text-align:center; }
-            </style>
-            </head><body>${headerHTML}${content}</body></html>`);
-      newWin.document.close();
-      newWin.print();
-    };
-  }
+            const newWin = window.open("", "_blank");
+            newWin.document.write(`
+                <html><head><title>PPMP Print</title>
+                <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap" rel="stylesheet">
+                <style>
+                body { font-family:'Poppins',sans-serif;margin:20px; }
+                table { width:100%;border-collapse:collapse; }
+                th,td { border:1px solid #ccc;padding:6px;text-align:center; }
+                .signature-container { display:flex;justify-content:space-around;margin-top:40px;text-align:center; }
+                .button-group { display:none !important; }
+                </style>
+                </head><body>${headerHTML}${content}</body></html>`);
+            newWin.document.close();
+            
+            setTimeout(() => {
+                newWin.print();
+            }, 250);
+        };
+    }
 
   // ==========================================
   // FETCH SECTOR PPMP & BUDGET ON LOGIN
@@ -1178,4 +1176,32 @@ document.addEventListener("DOMContentLoaded", () => {
       this.value = intPart + decPart;
     });
   }
+
+      // JS for Market Scoping Picture Upload Preview
+    // Change file upload button text when an image is selected
+    document.querySelectorAll('.scoping-file-input').forEach(input => {
+        input.addEventListener('change', function(e) {
+            const label = this.nextElementSibling;
+            const textSpan = label.querySelector('.file-text');
+            const icon = label.querySelector('i');
+
+            if (this.files && this.files.length > 0) {
+                // Truncate file name if it's too long
+                let fileName = this.files[0].name;
+                if (fileName.length > 15) {
+                    fileName = fileName.substring(0, 12) + "...";
+                }
+                
+                textSpan.textContent = fileName;
+                icon.className = "bi bi-check-circle-fill"; // Change to success icon
+                label.classList.add('file-selected'); // Apply green success styles
+            } else {
+                // Reset if user cancels
+                textSpan.textContent = "Attach Image";
+                icon.className = "bi bi-cloud-arrow-up";
+                label.classList.remove('file-selected');
+            }
+        });
+    });
 });
+
