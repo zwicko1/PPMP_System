@@ -722,128 +722,93 @@
               <h3 style="margin-bottom: -20px;">3. Market Scoping Activity/Activities Conducted (Check all that apply)</h3>
               <h5 style="border-bottom: 2px solid #eee; padding-bottom: 5px; font-weight: 200; color:#6c757d;">This confirms that market scoping activities were conducted in accordance with Section 10 of Republic Act No. 12009 and its Implementing Rules and Regulations (IRR), and considered in the Project Procurement Management Plan, consistent with the Principle of Proportionality.  </h1>
               <table style="width: 100%; border-collapse: collapse; font-size: 0.9em; margin-bottom: 20px;">
-                  <thead style="background: #f8f9fa;">
-                      <tr>
-                          <th style="padding: 10px; border: 1px solid #dee2e6; text-align: center; width: 60px;">Select</th>
-                          <th style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">Activity Conducted</th>
-                          <th style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">Attach Picture</th>
-                      </tr>
-                  </thead>
-                  <tbody>
-                      <tr>
-                          <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
-                              <input type="checkbox" name="activities" value="Consultations" id="chk_consultations">
-                          </td>
-                          <td style="padding: 8px; border: 1px solid #dee2e6;">
-                              <label for="chk_consultations" style="cursor: pointer; display: block; width: 100%;">Consultations with suppliers/industry</label>
-                          </td>
-                          <td style="padding: 8px; border: 1px solid #dee2e6;">
-                              <div class="custom-file-upload">
-                                  <input type="file" id="file_consultations" accept="image/*" class="scoping-file-input">
-                                  <label for="file_consultations">
-                                      <i class="bi bi-cloud-arrow-up"></i> <span class="file-text">Attach Image</span>
-                                  </label>
-                              </div>
-                          </td>
-                      </tr>
-                      <tr>
-                          <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
-                              <input type="checkbox" name="activities" value="Summits" id="chk_summits">
-                          </td>
-                          <td style="padding: 8px; border: 1px solid #dee2e6;">
-                              <label for="chk_summits" style="cursor: pointer; display: block; width: 100%;">Participation in summits/conferences</label>
-                          </td>
-                          <td style="padding: 8px; border: 1px solid #dee2e6;">
-                              <div class="custom-file-upload">
-                                  <input type="file" id="file_summits" accept="image/*" class="scoping-file-input">
-                                  <label for="file_summits">
-                                      <i class="bi bi-cloud-arrow-up"></i> <span class="file-text">Attach Image</span>
-                                  </label>
-                              </div>
-                          </td>
-                      </tr>
-                      <tr>
-                          <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
-                              <input type="checkbox" name="activities" value="Technical Reports" id="chk_reports">
-                          </td>
-                          <td style="padding: 8px; border: 1px solid #dee2e6;">
-                              <label for="chk_reports" style="cursor: pointer; display: block; width: 100%;">Review of technical/market reports</label>
-                          </td>
-                          <td style="padding: 8px; border: 1px solid #dee2e6;">
-                              <div class="custom-file-upload">
-                                  <input type="file" id="file_reports" accept="image/*" class="scoping-file-input">
-                                  <label for="file_reports">
-                                      <i class="bi bi-cloud-arrow-up"></i> <span class="file-text">Attach Image</span>
-                                  </label>
-                              </div>
-                          </td>
-                      </tr>
-                      <tr>
-                          <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
-                              <input type="checkbox" name="activities" value="Brochures" id="chk_brochures">
-                          </td>
-                          <td style="padding: 8px; border: 1px solid #dee2e6;">
-                              <label for="chk_brochures" style="cursor: pointer; display: block; width: 100%;">Review of product/service brochures</label>
-                          </td>
-                          <td style="padding: 8px; border: 1px solid #dee2e6;">
-                              <div class="custom-file-upload">
-                                  <input type="file" id="file_brochures" accept="image/*" class="scoping-file-input">
-                                  <label for="file_brochures">
-                                      <i class="bi bi-cloud-arrow-up"></i> <span class="file-text">Attach Image</span>
-                                  </label>
-                              </div>
-                          </td>
-                      </tr>
-                      <tr>
-                          <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
-                              <input type="checkbox" name="activities" value="Price Sourcing" id="chk_pricing">
-                          </td>
-                          <td style="padding: 8px; border: 1px solid #dee2e6;">
-                              <label for="chk_pricing" style="cursor: pointer; display: block; width: 100%;">Price sourcing for quotations</label>
-                          </td>
-                          <td style="padding: 8px; border: 1px solid #dee2e6;">
-                              <div class="custom-file-upload">
-                                  <input type="file" id="file_pricing" accept="image/*" class="scoping-file-input">
-                                  <label for="file_pricing">
-                                      <i class="bi bi-cloud-arrow-up"></i> <span class="file-text">Attach Image</span>
-                                  </label>
-                              </div>
-                          </td>
-                      </tr>
-                      <tr>
-                          <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
-                              <input type="checkbox" name="activities" value="PhilGEPS" id="chk_philgeps">
-                          </td>
-                          <td style="padding: 8px; border: 1px solid #dee2e6;">
-                              <label for="chk_philgeps" style="cursor: pointer; display: block; width: 100%;">Use of data from PhilGEPS/agency websites</label>
-                          </td>
-                          <td style="padding: 8px; border: 1px solid #dee2e6;">
-                              <div class="custom-file-upload">
-                                  <input type="file" id="file_philgeps" accept="image/*" class="scoping-file-input">
-                                  <label for="file_philgeps">
-                                      <i class="bi bi-cloud-arrow-up"></i> <span class="file-text">Attach Image</span>
-                                  </label>
-                              </div>
-                          </td>
-                      </tr>
-                      <tr>
-                          <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
-                              <input type="checkbox" name="activities" value="Other" id="otherActivityCheck">
-                          </td>
-                          <td style="padding: 8px; border: 1px solid #dee2e6;">
-                              <label for="otherActivityCheck" style="cursor: pointer; display: block; margin-bottom: 5px;">Other analogous activity:</label>
-                              <input type="text" id="otherActivityText" style="width: 100%; padding: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;" disabled>
-                          </td>
-                          <td style="padding: 8px; border: 1px solid #dee2e6; vertical-align: bottom;">
-                              <div class="custom-file-upload">
-                                  <input type="file" id="file_other" accept="image/*" class="scoping-file-input">
-                                  <label for="file_other">
-                                      <i class="bi bi-cloud-arrow-up"></i> <span class="file-text">Attach Image</span>
-                                  </label>
-                              </div>
-                          </td>
-                      </tr>
-                  </tbody>
+                <thead style="background: #f8f9fa;">
+                    <tr>
+                        <th style="padding: 10px; border: 1px solid #dee2e6; text-align: center; width: 60px;">Select</th>
+                        <th style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">Activity Conducted</th>
+                        <th style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">Provide Link (URL)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
+                            <input type="checkbox" name="activities" value="Consultations" id="chk_consultations">
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #dee2e6;">
+                            <label for="chk_consultations" style="cursor: pointer; display: block; width: 100%;">Consultations with suppliers/industry</label>
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #dee2e6;">
+                            <input type="url" id="doc_consultations" placeholder="https://..." style="width: 100%; padding: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
+                            <input type="checkbox" name="activities" value="Summits" id="chk_summits">
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #dee2e6;">
+                            <label for="chk_summits" style="cursor: pointer; display: block; width: 100%;">Participation in summits/conferences</label>
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #dee2e6;">
+                            <input type="url" id="doc_summits" placeholder="https://..." style="width: 100%; padding: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
+                            <input type="checkbox" name="activities" value="Technical Reports" id="chk_reports">
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #dee2e6;">
+                            <label for="chk_reports" style="cursor: pointer; display: block; width: 100%;">Review of technical/market reports</label>
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #dee2e6;">
+                            <input type="url" id="doc_reports" placeholder="https://..." style="width: 100%; padding: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
+                            <input type="checkbox" name="activities" value="Brochures" id="chk_brochures">
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #dee2e6;">
+                            <label for="chk_brochures" style="cursor: pointer; display: block; width: 100%;">Review of product/service brochures</label>
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #dee2e6;">
+                            <input type="url" id="doc_brochures" placeholder="https://..." style="width: 100%; padding: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
+                            <input type="checkbox" name="activities" value="Price Sourcing" id="chk_pricing">
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #dee2e6;">
+                            <label for="chk_pricing" style="cursor: pointer; display: block; width: 100%;">Price sourcing for quotations</label>
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #dee2e6;">
+                            <input type="url" id="doc_pricing" placeholder="https://..." style="width: 100%; padding: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
+                            <input type="checkbox" name="activities" value="PhilGEPS" id="chk_philgeps">
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #dee2e6;">
+                            <label for="chk_philgeps" style="cursor: pointer; display: block; width: 100%;">Use of data from PhilGEPS/agency websites</label>
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #dee2e6;">
+                            <input type="url" id="doc_philgeps" placeholder="https://..." style="width: 100%; padding: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
+                            <input type="checkbox" name="activities" value="Other" id="otherActivityCheck">
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #dee2e6;">
+                            <label for="otherActivityCheck" style="cursor: pointer; display: block; margin-bottom: 5px;">Other analogous activity:</label>
+                            <input type="text" id="otherActivityText" style="width: 100%; padding: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;" disabled>
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #dee2e6; vertical-align: bottom;">
+                            <input type="url" id="doc_other" placeholder="https://..." style="width: 100%; padding: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;" disabled>
+                        </td>
+                    </tr>
+                </tbody>
               </table>
 
               <!-- NUMBER 3 End - Before Notes -->

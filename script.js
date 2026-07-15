@@ -1176,32 +1176,5 @@ document.addEventListener("DOMContentLoaded", () => {
       this.value = intPart + decPart;
     });
   }
-
-      // JS for Market Scoping Picture Upload Preview
-    // Change file upload button text when an image is selected
-    document.querySelectorAll('.scoping-file-input').forEach(input => {
-        input.addEventListener('change', function(e) {
-            const label = this.nextElementSibling;
-            const textSpan = label.querySelector('.file-text');
-            const icon = label.querySelector('i');
-
-            if (this.files && this.files.length > 0) {
-                // Truncate file name if it's too long
-                let fileName = this.files[0].name;
-                if (fileName.length > 15) {
-                    fileName = fileName.substring(0, 12) + "...";
-                }
-                
-                textSpan.textContent = fileName;
-                icon.className = "bi bi-check-circle-fill"; // Change to success icon
-                label.classList.add('file-selected'); // Apply green success styles
-            } else {
-                // Reset if user cancels
-                textSpan.textContent = "Attach Image";
-                icon.className = "bi bi-cloud-arrow-up";
-                label.classList.remove('file-selected');
-            }
-        });
-    });
 });
 
