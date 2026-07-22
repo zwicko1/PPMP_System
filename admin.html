@@ -49,6 +49,129 @@
             user-select: none;
             transition: opacity 0.2s;
         }
+
+        /* BUTTON GLOBAL SYSTEM LOCK */
+
+        #toggleSubmissionBtn {
+        position: relative;
+        overflow: hidden;
+        isolation: isolate;
+        border: none;
+        border-radius: 10px;
+        padding: 14px 32px;
+        min-width: 240px;
+        font-family: inherit;
+        font-weight: 600;
+        font-size: 15px;
+        letter-spacing: 0.2px;
+        color: #fff;
+        cursor: pointer;
+        -webkit-user-select: none;
+        user-select: none;
+        touch-action: none;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+        transition: background 0.35s ease, box-shadow 0.2s ease, transform 0.12s ease;
+        }
+
+        #toggleSubmissionBtn[data-fy-open="true"] {
+        background: #198754;
+        }
+        #toggleSubmissionBtn[data-fy-open="false"] {
+        background: #dc3545;
+        }
+
+        #toggleSubmissionBtn:active {
+        transform: scale(0.98);
+        }
+
+        #toggleSubmissionBtn:disabled {
+        cursor: not-allowed;
+        opacity: 0.7;
+        }
+
+        /* Progress fill layer, driven by inline width + transition set in JS */
+        #holdFill {
+        position: absolute;
+        inset: 0;
+        width: 0%;
+        z-index: 0;
+        pointer-events: none;
+        }
+
+        #toggleSubmissionBtn[data-fy-open="true"] #holdFill {
+        background: linear-gradient(90deg, #dc3545, #ff6b6b);
+        }
+        #toggleSubmissionBtn[data-fy-open="false"] #holdFill {
+        background: linear-gradient(90deg, #198754, #37d178);
+        }
+
+        /* subtle leading edge glow on the fill */
+        #holdFill::after {
+        content: "";
+        position: absolute;
+        top: 0; right: 0;
+        width: 3px; height: 100%;
+        background: rgba(255, 255, 255, 0.85);
+        filter: blur(2px);
+        opacity: 0;
+        }
+        #toggleSubmissionBtn.holding #holdFill::after {
+        opacity: 1;
+        }
+
+        /* Text layers */
+        #defaultText,
+        #hoverText {
+        position: relative;
+        z-index: 1;
+        display: block;
+        white-space: nowrap;
+        transition: opacity 0.28s ease, filter 0.28s ease;
+        }
+
+        #hoverText {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        filter: blur(5px);
+        }
+
+        #defaultText {
+        opacity: 1;
+        filter: blur(0);
+        }
+
+        /* Hover (idle only — not while holding, not disabled) */
+        #toggleSubmissionBtn:hover:not(.holding):not(:disabled) #defaultText {
+        opacity: 0;
+        filter: blur(5px);
+        }
+        #toggleSubmissionBtn:hover:not(.holding):not(:disabled) #hoverText {
+        opacity: 1;
+        filter: blur(0);
+        }
+
+        /* While holding: force default text back, no matter the hover state */
+        #toggleSubmissionBtn.holding #defaultText {
+        opacity: 1 !important;
+        filter: blur(0) !important;
+        }
+        #toggleSubmissionBtn.holding #hoverText {
+        opacity: 0 !important;
+        filter: blur(5px) !important;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+        #toggleSubmissionBtn,
+        #defaultText,
+        #hoverText,
+        #holdFill {
+            transition-duration: 0.01ms !important;
+        }
+        }
     </style>
 </head>
 <body>
@@ -242,12 +365,13 @@
                             <strong style="font-size: 1.1em; color: #333;">PPMP Submission Portal</strong>
                             <p style="margin: 5px 0 0 0; color: #6c757d; font-size: 0.9em;">Enable or disable the ability for Sectors to create, edit, or submit PPMPs.</p>
                         </div>
-                        <button id="toggleSubmissionBtn" onclick="toggleGlobalSubmission()" style="background: #6c757d; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 150px; transition: 0.3s;">
-                            Loading...
-                        </button>
+                    <button id="toggleSubmissionBtn" data-fy-open="false">
+                        <div id="holdFill"></div>
+                        <span id="defaultText"></span>
+                        <span id="hoverText"></span>
+                    </button>
                     </div>
                 </div>
-                
                 <div style="background: #f8f9fa; padding: 20px; border: 1px solid #dee2e6; border-radius: 6px;">
                     <h4 style="margin-top: 0; color: #c14f3b;">📄 Document Types</h4>
                     <div style="display: flex; gap: 10px; margin-bottom: 15px;">
@@ -314,5 +438,16 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <script src="admin.js"></script>
+
+    <!-- POPUP MODAL -->
+
+    <div id="customPopup" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; font-family: 'Segoe UI', sans-serif;">
+        <div style="background: white; border: 3px solid #1a1a1a; border-radius: 16px; padding: 28px 26px 24px; width: 300px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
+            <div id="customPopupIcon" style="width: 48px; height: 48px; margin: 0 auto 14px; border-radius: 50%; background: #f2eeff; display: flex; align-items: center; justify-content: center; font-size: 22px;">✅</div>
+            <h3 id="customPopupTitle" style="margin: 0 0 8px; color: #1a1a1a; font-size: 1.2rem; font-weight: 700;">Notification</h3>
+            <p id="customPopupMessage" style="color: #6c6c6c; margin: 0 0 20px; font-size: 0.9rem; line-height: 1.4;">Successfully updated!</p>
+            <button onclick="closeCustomPopup()" style="background: #6c5ce7; color: white; border: none; padding: 10px 32px; border-radius: 24px; cursor: pointer; font-weight: 600; font-size: 0.9rem; box-shadow: 0 3px 0 #4b3fb0; transition: transform 0.1s;" onmousedown="this.style.transform='translateY(2px)'; this.style.boxShadow='0 1px 0 #4b3fb0'" onmouseup="this.style.transform='translateY(0)'; this.style.boxShadow='0 3px 0 #4b3fb0'">OK</button>
+        </div>
+    </div>
 </body>
 </html>

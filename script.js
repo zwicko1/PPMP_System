@@ -235,10 +235,12 @@ document.addEventListener("DOMContentLoaded", () => {
         document.body.style.cursor = "default";
         localStorage.clear();
 
-        if (isTimeout) {
-          alert(
-            "Security Timeout: You have been logged out due to inactivity.",
+        if (selectedActivities.length === 0 && !otherCheckbox.checked) {
+          showCustomPopup(
+            "Please select at least one Market Scoping Activity before saving.",
+            { title: "Selection Required", type: "warning" }
           );
+          return;
         }
         window.location.replace("index.html");
       });
@@ -430,8 +432,9 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       if (selectedActivities.length === 0 && !otherCheckbox.checked) {
-        alert(
-          "⚠️ Please select at least one Market Scoping Activity before saving.",
+        showCustomPopup(
+          "Please select at least one Market Scoping Activity before saving.",
+          { title: "Selection Required", type: "warning" }
         );
         return;
       }
@@ -687,7 +690,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const exportBtn = document.getElementById("exportExcel");
   if (exportBtn) {
     exportBtn.onclick = () => {
-      if (projects.length === 0) return alert("No projects to export.");
+      if (projects.length === 0) return showCustomPopup("No projects to export.", { title: "Export Failed", type: "error" });
       const ws = XLSX.utils.json_to_sheet(projects);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "PPMP Projects");
@@ -767,8 +770,9 @@ document.addEventListener("DOMContentLoaded", () => {
         ).then((response) => {
           if (response.status === 401) {
             localStorage.clear();
-            alert(
+            showCustomPopup(
               "Session Expired: Your account was logged into from another device.",
+              { title: "Session Expired", type: "error" }
             );
             window.location.replace("index.html");
             throw new Error("Token Invalidated");
@@ -1002,12 +1006,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const token = localStorage.getItem("auth_token");
 
     if (!token) {
-      alert("Security Error: You must be logged in to submit.");
+      showCustomPopup("You must be logged in to submit.", { title: "Security Error", type: "error" });
       return;
     }
 
     if (projects.length === 0) {
-      return alert("Please add at least one project before saving.");
+      return showCustomPopup("Please add at least one project before saving.", { title: "Save Failed", type: "error" });
     }
 
     const formattedProjects = projects.map((p) => ({
@@ -1036,16 +1040,17 @@ document.addEventListener("DOMContentLoaded", () => {
       body: JSON.stringify(payload),
     })
       .then((response) => {
-        if (response.status === 401) {
-          btnElement.innerText = defaultText;
-          btnElement.disabled = false;
-          localStorage.clear();
-          alert(
-            "Session Expired: Your account was logged into from another device.",
-          );
-          window.location.replace("index.html");
-          throw new Error("Token Invalidated");
-        }
+          if (response.status === 401) {
+            btnElement.innerText = defaultText;
+            btnElement.disabled = false;
+            localStorage.clear();
+            showCustomPopup(
+              "Your account was logged into from another device.",
+              { title: "Session Expired", type: "warning" }
+            );
+            window.location.replace("index.html");
+            throw new Error("Token Invalidated");
+          }
         return response.json();
       })
       .then((data) => {
@@ -1053,15 +1058,16 @@ document.addEventListener("DOMContentLoaded", () => {
         btnElement.disabled = false;
 
         if (data.status === "success") {
-          alert(
+          showCustomPopup(
             targetStatusId === 1
               ? "Draft successfully saved!"
               : "PPMP Successfully Submitted for Approval!",
           );
           fetchCurrentPpmp();
         } else {
-          alert(
+          showCustomPopup(
             "Error saving: " + (data.message || "Please check your inputs."),
+            { title: "Save Failed", type: "error" }
           );
         }
       })
@@ -1070,7 +1076,7 @@ document.addEventListener("DOMContentLoaded", () => {
           console.error("Submission Error:", error);
           btnElement.innerText = defaultText;
           btnElement.disabled = false;
-          alert("Failed to connect to the server.");
+          showCustomPopup("Failed to connect to the server.", { title: "Connection Error", type: "error" });
         }
       });
   }
@@ -1176,5 +1182,30 @@ document.addEventListener("DOMContentLoaded", () => {
       this.value = intPart + decPart;
     });
   }
+
+  // ==========================================
+  // REUSABLE POPUP MODAL ENGINE
+  // ==========================================
+  const POPUP_TYPES = {
+      success: { icon: '✅', bg: '#f2eeff' },
+      error:   { icon: '❌', bg: '#ffeeee' },
+      warning: { icon: '⚠️', bg: '#fff8e1' },
+      info:    { icon: 'ℹ️', bg: '#e8f4ff' }
+  };
+
+  window.showCustomPopup = function (message, options = {}) {
+      const { title = "Notification", type = "success" } = options;
+      const style = POPUP_TYPES[type] || POPUP_TYPES.success;
+
+      document.getElementById('customPopupTitle').textContent = title;
+      document.getElementById('customPopupMessage').textContent = message;
+      document.getElementById('customPopupIcon').textContent = style.icon;
+      document.getElementById('customPopupIcon').style.background = style.bg;
+      document.getElementById('customPopup').style.display = 'flex';
+  };
+
+  window.closeCustomPopup = function () {
+      document.getElementById('customPopup').style.display = 'none';
+  };
 });
 

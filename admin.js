@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         localStorage.removeItem("auth_token");
         localStorage.removeItem("user_data");
-        alert("Access Denied: You must be an Administrator.");
+        showCustomPopup("Access Denied: You must be an Administrator.", { title: "Access Denied", type: "error" });
         window.location.replace("index.html");
       }
     }
@@ -168,7 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.removeItem("auth_token");
         localStorage.removeItem("user_data");
         if (isTimeout)
-          alert("Security Timeout: Admin session expired due to inactivity.");
+          showCustomPopup("Security Timeout: Admin session expired due to inactivity.", { title: "Session Expired", type: "warning" });
         window.location.replace("admin.html");
       });
     }
@@ -342,12 +342,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const numericValue = parseFloat(rawValue) || 0;
 
     if (numericValue < window.currentAllocatedTotal) {
-      alert(
-        "Error: You cannot shrink the University Budget below the total amount already allocated to sectors (₱" +
-          window.currentAllocatedTotal.toLocaleString(undefined, {
-            minimumFractionDigits: 2,
-          }) +
-          ").\n\nPlease reduce the Sector budgets first!",
+      showCustomPopup(
+        "You cannot shrink the University Budget below the total amount already allocated to sectors (₱" +
+          window.currentAllocatedTotal.toLocaleString(undefined, { minimumFractionDigits: 2 }) +
+          "). Please reduce the Sector budgets first.",
+        { title: "Budget Too Low", type: "error" }
       );
 
       const masterEl = document.getElementById("masterBudgetInput");
@@ -411,11 +410,10 @@ document.addEventListener("DOMContentLoaded", () => {
             btn.disabled = false;
           }, 3000);
         }
-        alert(
-          "Backend Failed to Save: " +
-            err.message +
-            "\n\nCheck your Laravel terminal for details!",
-        );
+      showCustomPopup(
+        "Backend failed to save: " + err.message + ". Check your Laravel terminal for details.",
+        { title: "Save Failed", type: "error" }
+      );
       });
   };
 
@@ -979,8 +977,9 @@ document.addEventListener("DOMContentLoaded", () => {
       statusName.toLowerCase().includes("reject")
     ) {
       if (remarks.trim() === "") {
-        alert(
+        showCustomPopup(
           `You must provide remarks when setting the status to '${statusName}' so the Sector knows what to fix.`,
+          { title: "Remarks Required", type: "warning" }
         );
         return;
       }
@@ -1016,16 +1015,16 @@ document.addEventListener("DOMContentLoaded", () => {
       .then((response) => response.json())
       .then((data) => {
         if (data.status === "success") {
-          alert("Decision recorded successfully!");
+          showCustomPopup("Decision recorded successfully!", { title: "Decision Saved", type: "success" });
           document.getElementById("reviewModal").style.display = "none"; // Close modal
           loadAdminPpmps(); // Refresh the table so the approved item vanishes!
         } else {
-          alert("Error: " + data.message);
+          showCustomPopup("Error: " + data.message);
         }
       })
       .catch((error) => {
         console.error("Submission Error:", error);
-        alert("Failed to connect to the server.");
+        showCustomPopup("Failed to connect to the server.", { title: "Connection Error", type: "error" });
       });
   }
 
@@ -1078,7 +1077,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.saveDataEntry = function (tableType, inputId) {
     const token = localStorage.getItem("auth_token");
     const nameVal = document.getElementById(inputId).value.trim();
-    if (!nameVal) return alert("Please enter a name.");
+    if (!nameVal) return showCustomPopup("Please enter a name.", { title: "Missing Name", type: "warning" });
 
     fetch(`http://127.0.0.1:8000/api/admin/ppmp-${tableType}`, {
       method: "POST",
@@ -1094,7 +1093,7 @@ document.addEventListener("DOMContentLoaded", () => {
           document.getElementById(inputId).value = "";
           loadAdminDataTables();
         } else {
-          alert("Error saving.");
+          showCustomPopup("Error saving.", { title: "Save Failed", type: "error" });
         }
       });
   };
@@ -1116,9 +1115,9 @@ document.addEventListener("DOMContentLoaded", () => {
       .then((res) => res.json())
       .then((data) => {
         if (data.status === "success") {
-          alert("Successfully updated!");
+          showCustomPopup('Successfully updated!');
         } else {
-          alert("Error updating.");
+          showCustomPopup("Error updating.");
         }
       });
   };
@@ -1135,7 +1134,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (data.status === "success") {
           loadAdminDataTables();
         } else {
-          alert("Error toggling status.");
+          showCustomPopup("Error toggling status.", { title: "Update Failed", type: "error" });
         }
       });
   };
@@ -1173,16 +1172,72 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ==========================================
+// ==========================================
   // GLOBAL SUBMISSION LOCK ENGINE
   // ==========================================
   let isSubmissionOpen = false;
+  const HOLD_DURATION = 1100; // ms — how long the user must hold
+
+  const btn = document.getElementById("toggleSubmissionBtn");
+  const holdFill = document.getElementById("holdFill");
+  const defaultText = document.getElementById("defaultText");
+  const hoverText = document.getElementById("hoverText");
+
+  let holdTimer = null;
+
+  // ---- render helper: sets colors (via data attr) + both text layers ----
+  function renderButtonState(isOpen, targetYear) {
+    btn.dataset.fyOpen = isOpen ? "true" : "false";
+    defaultText.textContent = isOpen ? `✅ FY ${targetYear} OPEN` : `🛑 FY ${targetYear} CLOSED`;
+    hoverText.textContent = isOpen ? "Hold to Close FY" : "Hold to Open FY";
+  }
+
+  // ---- hold interaction ----
+  function startHold() {
+    if (btn.disabled) return;
+    btn.classList.add("holding");
+
+    // reset fill instantly, then animate to 100% over HOLD_DURATION
+    holdFill.style.transition = "none";
+    holdFill.style.width = "0%";
+    void holdFill.offsetWidth; // force reflow so the next transition applies
+    holdFill.style.transition = `width ${HOLD_DURATION}ms linear`;
+    holdFill.style.width = "100%";
+
+    holdTimer = setTimeout(completeHold, HOLD_DURATION);
+  }
+
+  function cancelHold() {
+    if (!holdTimer && !btn.classList.contains("holding")) return;
+    clearTimeout(holdTimer);
+    holdTimer = null;
+    btn.classList.remove("holding");
+    holdFill.style.transition = "width 0.25s ease";
+    holdFill.style.width = "0%";
+  }
+
+  function completeHold() {
+    holdTimer = null;
+    btn.classList.remove("holding");
+    holdFill.style.transition = "width 0.15s ease";
+    holdFill.style.width = "0%";
+    toggleGlobalSubmission();
+  }
+
+  btn.addEventListener("pointerdown", startHold);
+  btn.addEventListener("pointerup", cancelHold);
+  btn.addEventListener("pointerleave", cancelHold);
+  btn.addEventListener("pointercancel", cancelHold);
+  // safety net: if the pointer is released anywhere on the page
+  window.addEventListener("pointerup", (e) => {
+    if (e.target !== btn) cancelHold();
+  });
 
   // Initialize the new year filter to Next Year by default
   const lockYearFilter = document.getElementById("lockYearFilter");
   if (lockYearFilter) {
       lockYearFilter.value = new Date().getFullYear() + 1;
-      
+
       // Auto-refresh the button status whenever the Admin changes the year!
       lockYearFilter.addEventListener("change", () => {
           fetchGlobalSettings();
@@ -1191,47 +1246,33 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.fetchGlobalSettings = function () {
     const token = localStorage.getItem("auth_token");
-    
+
     const yearInput = document.getElementById("lockYearFilter");
     const targetYear = yearInput && yearInput.value ? yearInput.value : new Date().getFullYear() + 1;
 
-    // 🛑 FIX: Removed '/admin' from this URL to match api.php!
     fetch(`http://127.0.0.1:8000/api/settings/submission-status?year=${targetYear}`, {
       headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
     })
       .then((res) => res.json())
       .then((data) => {
-        const btn = document.getElementById("toggleSubmissionBtn");
-        if (data.is_open) {
-          isSubmissionOpen = true;
-          btn.innerText = `✅ FY ${targetYear} OPEN`;
-          btn.style.background = "#198754"; // Green
-        } else {
-          isSubmissionOpen = false;
-          btn.innerText = `🛑 FY ${targetYear} CLOSED`;
-          btn.style.background = "#dc3545"; // Red
-        }
+        isSubmissionOpen = data.is_open;
+        renderButtonState(isSubmissionOpen, targetYear);
       })
       .catch((err) => console.error("Failed to load settings:", err));
   };
 
   window.toggleGlobalSubmission = function () {
     const token = localStorage.getItem("auth_token");
-    const btn = document.getElementById("toggleSubmissionBtn");
-    const newState = !isSubmissionOpen;
 
-    // Grab the year from the NEW UI element
+    // Grab the year from the UI element
     const yearInput = document.getElementById("lockYearFilter");
     const targetYear = yearInput && yearInput.value ? parseInt(yearInput.value) : new Date().getFullYear() + 1;
 
-    const confirmMsg = newState
-      ? `Are you sure you want to OPEN the PPMP submission portal for Fiscal Year ${targetYear}?`
-      : `Are you sure you want to CLOSE the PPMP submission portal for Fiscal Year ${targetYear}?`;
+    const newState = !isSubmissionOpen;
 
-    if (!confirm(confirmMsg)) return;
-
-    btn.innerText = "Updating...";
+    // No confirm() dialog — the hold gesture itself is the confirmation.
     btn.disabled = true;
+    defaultText.textContent = "Updating...";
 
     fetch("http://127.0.0.1:8000/api/admin/settings/submission-status/toggle", {
       method: "POST",
@@ -1244,7 +1285,6 @@ document.addEventListener("DOMContentLoaded", () => {
     })
       .then(async (res) => {
         const data = await res.json();
-        // Catch 404/500 errors gracefully
         if (!res.ok) throw new Error(data.message || "Server Error");
         return data;
       })
@@ -1253,13 +1293,13 @@ document.addEventListener("DOMContentLoaded", () => {
         if (data.status === "success") {
           fetchGlobalSettings(); // Refresh UI
         } else {
-          alert("Error updating status.");
+          showCustomPopup("Error updating status.", { title: "Update Failed", type: "error" });
           fetchGlobalSettings();
         }
       })
       .catch((err) => {
           btn.disabled = false;
-          alert("Connection Failed: " + err.message + "\nDid you add the route in api.php?");
+          showCustomPopup("Connection Failed: " + err.message + "\nDid you add the route in api.php?", { title: "Connection Error", type: "error" });
           fetchGlobalSettings();
       });
   };
@@ -1356,7 +1396,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.exportAppToExcel = function () {
     const tbody = document.getElementById("appTableBody");
     if (!tbody || tbody.rows.length === 0 || tbody.innerText.includes("Click \"Generate")) {
-        return alert("Please generate the APP first before exporting.");
+        return showCustomPopup("Please generate the APP first before exporting.", { title: "Nothing to Export", type: "warning" });
     }
 
     const appData = [];
@@ -1402,7 +1442,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const year = document.getElementById("appYearFilter").value;
       const originalTable = document.querySelector("#appPanel table");
       if (!originalTable || originalTable.innerText.includes("Click \"Generate")) {
-          return alert("Please generate the APP first.");
+          return showCustomPopup("Please generate the APP first.", { title: "Nothing to Print", type: "warning" });
       }
 
       // We need to create a clone of the table that replaces inputs with flat text for printing
@@ -1457,5 +1497,30 @@ document.addEventListener("DOMContentLoaded", () => {
       setTimeout(() => {
           newWin.print();
       }, 500);
+  };
+
+  // FOR POPUP MODAL
+
+
+  const POPUP_TYPES = {
+      success: { icon: '✅', bg: '#f2eeff' },
+      error:   { icon: '❌', bg: '#ffeeee' },
+      warning: { icon: '⚠️', bg: '#fff8e1' },
+      info:    { icon: 'ℹ️', bg: '#e8f4ff' }
+  };
+
+  window.showCustomPopup = function (message, options = {}) {
+      const { title = "Notification", type = "success" } = options;
+      const style = POPUP_TYPES[type] || POPUP_TYPES.success;
+
+      document.getElementById('customPopupTitle').textContent = title;
+      document.getElementById('customPopupMessage').textContent = message;
+      document.getElementById('customPopupIcon').textContent = style.icon;
+      document.getElementById('customPopupIcon').style.background = style.bg;
+      document.getElementById('customPopup').style.display = 'flex';
+  };
+
+  window.closeCustomPopup = function () {
+      document.getElementById('customPopup').style.display = 'none';
   };
 });
