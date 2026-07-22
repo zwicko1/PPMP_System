@@ -1334,55 +1334,86 @@ document.addEventListener("DOMContentLoaded", () => {
 
         tbody.innerHTML = "";
         
-        // Render the heavy fillable table
+        // Check if the backend says this APP is locked
+        const isLocked = data.is_locked === true;
+        
+        // Toggle the visibility of the Finalize & Save button dynamically
+        const saveBtn = document.querySelector('button[onclick="saveAppToDatabase()"]');
+        if (saveBtn) {
+            saveBtn.style.display = isLocked ? "none" : "inline-block";
+        }
+
+        // Render the rows based on whether it is locked or editable
         data.data.forEach((row, index) => {
             const tr = document.createElement("tr");
-            
-            // Format the budget nicely
-            const budgetFormatted = parseFloat(row.total_budget).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            const defaultTitle = row.default_title.replace(/'/g, "\\'"); // escape quotes for inline JS
+            const budgetFormatted = parseFloat(row.total_budget || row.estimated_budget).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const defaultTitle = (row.default_title || '').replace(/'/g, "\\'");
 
-            tr.innerHTML = `
-                <td style="padding: 8px; border: 1px solid #dee2e6;">${index + 1}</td>
-                
-                <td style="padding: 8px; border: 1px solid #dee2e6; text-align: left;">
-                    <div style="display: flex; gap: 5px;">
-                        <input type="text" id="app_title_${index}" value="${row.default_title}" style="flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px;">
-                        <button onclick="document.getElementById('app_title_${index}').value = '${defaultTitle}'" title="Reset to Type/Category" style="background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; padding: 0 8px;">↺</button>
-                    </div>
-                </td>
-                
-                <td style="padding: 8px; border: 1px solid #dee2e6;"><input type="text" style="width: 90%; padding: 6px; border: 1px solid #ccc; border-radius: 4px;"></td>
-                <td style="padding: 8px; border: 1px solid #dee2e6;"><input type="text" style="width: 90%; padding: 6px; border: 1px solid #ccc; border-radius: 4px;"></td>
-                <td style="padding: 8px; border: 1px solid #dee2e6;">
-                    <select style="width: 90%; padding: 6px; border: 1px solid #ccc; border-radius: 4px;">
-                        <option>Competitive Bidding</option>
-                        <option>Small Value Procurement</option>
-                        <option>Direct Contracting</option>
-                        <option>Shopping</option>
-                        <option>-</option>
-                    </select>
-                </td>
-                <td style="padding: 8px; border: 1px solid #dee2e6;">
-                    <select style="width: 90%; padding: 6px; border: 1px solid #ccc; border-radius: 4px;">
-                        <option>Yes</option>
-                        <option selected>No</option>
-                    </select>
-                </td>
-                <td style="padding: 8px; border: 1px solid #dee2e6;"><input type="text" value="LCRB" style="width: 90%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; text-align: center;"></td>
-                <td style="padding: 8px; border: 1px solid #dee2e6;"><input type="text" placeholder="Jan 2026" style="width: 80px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; text-align: center;"></td>
-                <td style="padding: 8px; border: 1px solid #dee2e6;"><input type="text" placeholder="Dec 2026" style="width: 80px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; text-align: center;"></td>
-                <td style="padding: 8px; border: 1px solid #dee2e6;"><input type="text" placeholder="Fund 06 - STF" style="width: 100px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; text-align: center;"></td>
-                
-                <td style="padding: 8px; border: 1px solid #dee2e6; background: #e9ecef; font-weight: bold; color: #198754; text-align: right;">
-                    ${budgetFormatted}
-                </td>
-                
-                <td style="padding: 8px; border: 1px solid #dee2e6;"><input type="text" style="width: 90%; padding: 6px; border: 1px solid #ccc; border-radius: 4px;"></td>
-                <td style="padding: 8px; border: 1px solid #dee2e6;"><input type="text" style="width: 90%; padding: 6px; border: 1px solid #ccc; border-radius: 4px;"></td>
-            `;
+            if (isLocked) {
+                // VIEW-ONLY MODE: Render plain text cells, hiding input fields
+                tr.innerHTML = `
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">${index + 1}</td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6; text-align: left;">${row.default_title || ''}</td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">${row.end_user || ''}</td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">${row.general_description || ''}</td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">${row.mode_of_procurement || ''}</td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">${row.is_early_procurement || 'No'}</td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">${row.bid_evaluation_criteria || ''}</td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">${row.start_date || ''}</td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">${row.end_date || ''}</td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">${row.source_of_fund || ''}</td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6; background: #e9ecef; font-weight: bold; color: #198754; text-align: right;">${budgetFormatted}</td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">${row.strategy_tools || ''}</td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">${row.remarks || ''}</td>
+                `;
+            } else {
+                // EDITABLE MODE: Render fillable form inputs
+                tr.innerHTML = `
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">${index + 1}</td>
+                    
+                    <td style="padding: 8px; border: 1px solid #dee2e6; text-align: left;">
+                        <div style="display: flex; gap: 5px;">
+                            <input type="text" id="app_title_${index}" value="${row.default_title || ''}" style="flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px;">
+                            <button onclick="document.getElementById('app_title_${index}').value = '${defaultTitle}'" title="Reset to Type/Category" style="background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; padding: 0 8px;">↺</button>
+                        </div>
+                    </td>
+                    
+                    <td style="padding: 8px; border: 1px solid #dee2e6;"><input type="text" style="width: 90%; padding: 6px; border: 1px solid #ccc; border-radius: 4px;"></td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;"><input type="text" style="width: 90%; padding: 6px; border: 1px solid #ccc; border-radius: 4px;"></td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">
+                        <select style="width: 90%; padding: 6px; border: 1px solid #ccc; border-radius: 4px;">
+                            <option>Competitive Bidding</option>
+                            <option>Small Value Procurement</option>
+                            <option>Direct Contracting</option>
+                            <option>Shopping</option>
+                            <option>-</option>
+                        </select>
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">
+                        <select style="width: 90%; padding: 6px; border: 1px solid #ccc; border-radius: 4px;">
+                            <option>Yes</option>
+                            <option selected>No</option>
+                        </select>
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;"><input type="text" value="LCRB" style="width: 90%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; text-align: center;"></td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;"><input type="text" placeholder="Jan 2026" style="width: 80px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; text-align: center;"></td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;"><input type="text" placeholder="Dec 2026" style="width: 80px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; text-align: center;"></td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;"><input type="text" placeholder="Fund 06 - STF" style="width: 100px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; text-align: center;"></td>
+                    
+                    <td style="padding: 8px; border: 1px solid #dee2e6; background: #e9ecef; font-weight: bold; color: #198754; text-align: right;">
+                        ${budgetFormatted}
+                    </td>
+                    
+                    <td style="padding: 8px; border: 1px solid #dee2e6;"><input type="text" style="width: 90%; padding: 6px; border: 1px solid #ccc; border-radius: 4px;"></td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;"><input type="text" style="width: 90%; padding: 6px; border: 1px solid #ccc; border-radius: 4px;"></td>
+                `;
+            }
             tbody.appendChild(tr);
         });
+
+        if (isLocked) {
+            showCustomPopup(`Displaying the official locked APP for FY ${year}.`, { title: "Locked Document", type: "info" });
+        }
       })
       .catch((err) => {
           console.error("APP Gen Error:", err);
@@ -1522,5 +1553,88 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.closeCustomPopup = function () {
       document.getElementById('customPopup').style.display = 'none';
+  };
+
+  // ==========================================
+  // SAVE & FINALIZE APP TO DATABASE
+  // ==========================================
+  window.saveAppToDatabase = function () {
+    const tbody = document.getElementById("appTableBody");
+    const year = document.getElementById("appYearFilter").value;
+
+    if (!tbody || tbody.rows.length === 0 || tbody.innerText.includes("Click \"Generate")) {
+        return showCustomPopup("Please generate the APP first before saving.", { title: "Nothing to Save", type: "warning" });
+    }
+
+    if (!confirm(`Are you sure you want to finalize and lock the APP for Fiscal Year ${year}? This action will overwrite any existing draft and cannot be easily undone.`)) {
+        return;
+    }
+
+    const appData = [];
+    
+    // Loop through rows to gather data, matching the structure your backend expects
+    Array.from(tbody.rows).forEach((row) => {
+        const inputs = row.querySelectorAll("input, select");
+        if (inputs.length === 0) return;
+
+        // Strip formatting from the budget text
+        const rawBudget = row.cells[10] ? row.cells[10].innerText.replace(/,/g, '') : "0";
+
+        appData.push({
+            project_title: inputs[0] ? inputs[0].value : "",
+            end_user: inputs[1] ? inputs[1].value : "",
+            general_description: inputs[2] ? inputs[2].value : "",
+            mode_of_procurement: inputs[3] ? inputs[3].value : "",
+            is_early_procurement: (inputs[4] && inputs[4].value === "Yes") ? true : false,
+            bid_evaluation_criteria: inputs[5] ? inputs[5].value : "",
+            start_date: inputs[6] ? inputs[6].value : "",
+            end_date: inputs[7] ? inputs[7].value : "",
+            source_of_fund: inputs[8] ? inputs[8].value : "",
+            estimated_budget: parseFloat(rawBudget) || 0,
+            strategy_tools: inputs[9] ? inputs[9].value : "",
+            remarks: inputs[10] ? inputs[10].value : ""
+        });
+    });
+
+    const token = localStorage.getItem("auth_token");
+    
+    // Update the button UI while processing
+    const saveBtn = document.querySelector('button[onclick="saveAppToDatabase()"]');
+    if(saveBtn) {
+        saveBtn.innerText = "Saving...";
+        saveBtn.disabled = true;
+    }
+
+    fetch("http://127.0.0.1:8000/api/admin/app/store", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+            "Accept": "application/json"
+        },
+        body: JSON.stringify({
+            fiscal_year: parseInt(year),
+            items: appData
+        })
+    })
+    .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Server Error");
+        return data;
+    })
+    .then((data) => {
+        if(saveBtn) {
+            saveBtn.innerText = "💾 Finalize & Save";
+            saveBtn.disabled = false;
+        }
+        showCustomPopup(data.message || `APP for FY ${year} saved successfully!`, { title: "APP Finalized", type: "success" });
+    })
+    .catch((err) => {
+        if(saveBtn) {
+            saveBtn.innerText = "💾 Finalize & Save";
+            saveBtn.disabled = false;
+        }
+        showCustomPopup(err.message, { title: "Save Failed", type: "error" });
+    });
   };
 });

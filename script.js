@@ -137,6 +137,50 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ==========================================
+  // FLATPICKR DATE PICKERS INITIALIZATION
+  // ==========================================
+  const flatpickrConfig = {
+    dateFormat: "Y-m-d",
+    altInput: true,
+    altFormat: "F j, Y",
+    allowInput: true
+  };
+
+  const startDatePicker = flatpickr("#startDate", flatpickrConfig);
+  const endDatePicker = flatpickr("#endDate", flatpickrConfig);
+  const implementationPicker = flatpickr("#implementation", flatpickrConfig);
+
+  // ==========================================
+  // AUTOFILL + EDITABLE DATE LOGIC (+1 MONTH)
+  // ==========================================
+  const startDateInput = document.getElementById("startDate");
+
+  if (startDateInput) {
+    startDateInput.addEventListener("change", function () {
+      if (!this.value) return;
+
+      // Parse selected start date
+      const selectedDate = new Date(this.value);
+      if (isNaN(selectedDate)) return;
+
+      // Add 1 month for End Date and Implementation Period defaults
+      selectedDate.setMonth(selectedDate.getMonth() + 1);
+      const year = selectedDate.getFullYear();
+      const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const day = String(selectedDate.getDate()).padStart(2, '0');
+      const nextMonthFormatted = `${year}-${month}-${day}`;
+
+      // Set values and update Flatpickr instances so the UI reflects the change
+      if (endDatePicker) {
+        endDatePicker.setDate(nextMonthFormatted, true);
+      }
+      if (implementationPicker) {
+        implementationPicker.setDate(nextMonthFormatted, true);
+      }
+    });
+  }
+
+  // ==========================================
   // DEPENDENT DROPDOWN LOGIC (Category -> Type)
   // ==========================================
   const categorySelect = document.getElementById("categorySelect");
@@ -234,20 +278,14 @@ document.addEventListener("DOMContentLoaded", () => {
       }).finally(() => {
         document.body.style.cursor = "default";
         localStorage.clear();
-
-        if (selectedActivities.length === 0 && !otherCheckbox.checked) {
-          showCustomPopup(
-            "Please select at least one Market Scoping Activity before saving.",
-            { title: "Selection Required", type: "warning" }
-          );
-          return;
-        }
         window.location.replace("index.html");
       });
     } else {
       localStorage.clear();
       if (window.location.pathname.includes("index.html")) {
         window.location.reload();
+      } else {
+        window.location.replace("index.html");
       }
     }
   }
@@ -304,30 +342,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     fiscalYear.addEventListener("change", () => {
       fetchCurrentPpmp();
-    });
-  }
-
-  const startDateInput = document.getElementById("startDate");
-  const endDateInput = document.getElementById("endDate");
-
-  if (startDateInput && endDateInput) {
-    startDateInput.addEventListener("change", function () {
-      if (!this.value) return;
-
-      const parts = this.value.split("-");
-      let year = parseInt(parts[0], 10);
-      let month = parseInt(parts[1], 10);
-
-      month += 1;
-
-      if (month > 12) {
-        month = 1;
-        year += 1;
-      }
-
-      const nextMonthString = month.toString().padStart(2, "0");
-
-      endDateInput.value = `${year}-${nextMonthString}`;
     });
   }
 
@@ -1207,5 +1221,6 @@ document.addEventListener("DOMContentLoaded", () => {
   window.closeCustomPopup = function () {
       document.getElementById('customPopup').style.display = 'none';
   };
+
 });
 
